@@ -1,9 +1,7 @@
-.gitignore
 __pycache__/
 .env/
 .pytest_cache/
 .vscode
-*.pyc
-modules/
-gpkgs/
-/media/
+.git/
+.gitignore
+/archives/
