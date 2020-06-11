@@ -1,0 +1,54 @@
+{
+    "debug": {
+        "info": "display info in realtime for debugging"
+    },
+    "driver": {
+        "info": "select driver from (chrome, edge, firefox, iexplorer)",
+        "nested": true,
+        "values": "DRIVER_NAME"
+    },
+    "driver_info": {
+        "info": "Show selected driver specifications"
+    },
+    "drivers": {
+        "info": "select multiple drivers from (chrome, edge, firefox, iexplorer)",
+        "nested": true,
+        "nvalues": "*",
+        "values": "DRIVER_NAME"
+    },
+    "exit": {
+        "info": "Close All Selenium processes"
+    },
+    "focus": {
+        "info": "focus browser window. This action works partially on iexplorer or edge, those browser needs not to be minimized in order to operate.",
+        "nested": true
+    },
+    "gui": {
+        "info": "Open a browser to access the grid url and show the different sessions if any"
+    },
+    "reset": {
+        "args": "drivers",
+        "info": "Reset Selenium Server"
+    },
+    "run": {
+        "args": "driver,url,focus,refresh,scroll",
+        "info": "Launch a selected driver on top of the grid",
+        "required": "driver"
+    },
+    "refresh": {
+        "info": "refresh browser page",
+        "nested": true
+    },
+    "scroll": {
+        "info": "scroll bottom browser page",
+        "nested": true
+    },
+    "selenium_options": {
+        "info": "Show all command line options for Selenium Server"
+    },
+    "url": {
+        "info": "set browser url",
+        "nested": true,
+        "values": "URL"
+    }
+}
