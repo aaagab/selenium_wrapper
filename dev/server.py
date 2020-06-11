@@ -24,7 +24,7 @@ class SeleniumServer():
         self.processes=Processes(self.dy_app)
         self.driver_data=None
         self.driver=None
-        self.direpa_media=os.path.join(self.dy_app["direpa_app"], "media")
+        self.direpa_media=self.dy_app["app"]["direpa_media"]
         self.direpa_drivers=os.path.join(self.direpa_media, "drivers")
         self.filenpa_java=r"C:\Program Files\Java\jre1.8.0_251\bin\java"
         self.host="127.0.0.1"
