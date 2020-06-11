@@ -12,18 +12,19 @@ from ..gpkgs import shell_helpers as shell
 
 #  wmic process get Caption,ParentProcessId,ProcessId
 class Node():
-    def __init__(self, dy=None, parent=None, netstat_pids=None):
+    # def __init__(self, dy=None, parent=None, netstat_pids=None):
+    def __init__(self, dy=None, parent=None):
         self.parent=parent
         self.is_leaf=True
         self.nodes=[]
         self.dy=dy
         self.parents=[]
-        self.alldescendants=[]
-        self.tree={ self: dict() }
+        # self.alldescendants=[]
+        # self.tree={ self: dict() }
 
-        self.dy["netstat"] = dict()
-        if self.dy["pid"] in netstat_pids:
-            self.dy["netstat"]=netstat_pids[self.dy["pid"]]
+        # self.dy["netstat"] = dict()
+        # if self.dy["pid"] in netstat_pids:
+            # self.dy["netstat"]=netstat_pids[self.dy["pid"]]
 
         if self.parent is None:
             self.root=self
@@ -41,15 +42,15 @@ class Node():
                 self.parents.extend(self.parent.parents)
 
             self.parents.append(parent)
-            self.parent.tree[self.parent].update(self.tree)
+            # self.parent.tree[self.parent].update(self.tree)
 
-            tmp_parent=self.parent
-            while True:
-                tmp_parent.alldescendants.append(self)
-                if tmp_parent.parent is None:
-                    break
-                else:
-                    tmp_parent=tmp_parent.parent
+            # tmp_parent=self.parent
+            # while True:
+            #     tmp_parent.alldescendants.append(self)
+            #     if tmp_parent.parent is None:
+            #         break
+            #     else:
+            #         tmp_parent=tmp_parent.parent
 
 class Processes():
     def __init__(self, dy_app):
@@ -58,49 +59,49 @@ class Processes():
     def init(self):
         self.procs_by_name=dict()
         self.procs_by_pid=dict()
-        self.netstat_pids=dict()
-        self.set_tcp_connections()
+        # self.netstat_pids=dict()
+        # self.set_tcp_connections()
         self.set_processes()
         # sys.exit()
 
-    def set_tcp_connections(self):
-        for line in shell.cmd_get_value("netstat -aon").splitlines():
-            # Proto  Local Address          Foreign Address        State           PID
-            #  TCP    0.0.0.0:22             0.0.0.0:0              LISTENING       4664
-            #   UDP    0.0.0.0:123            *:*                                    1484
-            # reg_line=re.match(r"^\s+TCP\s+127.0.0.1:([0-9]+)\s+[0-9]+.[0-9]+.[0-9]+.[0-9]+:([0-9]+)\s+([A-Z]+)\s+([0-9]+)$", line)
-            line=line.strip()
-            if line:
-                fields=re.sub(r"\s+", r" ", line).split()
-                if len(fields) > 3:
-                    if fields[0] != "Proto":
-                        if len(fields) == 5:
-                            proto, ip_port_local, ip_port_foreign, state, pid = fields
-                        elif len(fields) == 4:
-                            proto, ip_port_local, ip_port_foreign, pid = fields
-                            state=None
+    # def set_tcp_connections(self):
+    #     for line in shell.cmd_get_value("netstat -aon").splitlines():
+    #         # Proto  Local Address          Foreign Address        State           PID
+    #         #  TCP    0.0.0.0:22             0.0.0.0:0              LISTENING       4664
+    #         #   UDP    0.0.0.0:123            *:*                                    1484
+    #         # reg_line=re.match(r"^\s+TCP\s+127.0.0.1:([0-9]+)\s+[0-9]+.[0-9]+.[0-9]+.[0-9]+:([0-9]+)\s+([A-Z]+)\s+([0-9]+)$", line)
+    #         line=line.strip()
+    #         if line:
+    #             fields=re.sub(r"\s+", r" ", line).split()
+    #             if len(fields) > 3:
+    #                 if fields[0] != "Proto":
+    #                     if len(fields) == 5:
+    #                         proto, ip_port_local, ip_port_foreign, state, pid = fields
+    #                     elif len(fields) == 4:
+    #                         proto, ip_port_local, ip_port_foreign, pid = fields
+    #                         state=None
 
-                        reg_ip_port_local=re.match(r"^(.+):([0-9]+)$", ip_port_local)
-                        ip_local=reg_ip_port_local.group(1)
-                        port_local=reg_ip_port_local.group(2)
-                        reg_ip_port_foreign=re.match(r"^(.+):(.+)$", ip_port_foreign)
-                        ip_foreign=reg_ip_port_foreign.group(1)
-                        port_foreign=reg_ip_port_foreign.group(2)
+    #                     reg_ip_port_local=re.match(r"^(.+):([0-9]+)$", ip_port_local)
+    #                     ip_local=reg_ip_port_local.group(1)
+    #                     port_local=reg_ip_port_local.group(2)
+    #                     reg_ip_port_foreign=re.match(r"^(.+):(.+)$", ip_port_foreign)
+    #                     ip_foreign=reg_ip_port_foreign.group(1)
+    #                     port_foreign=reg_ip_port_foreign.group(2)
 
-                        if not pid in self.netstat_pids:
-                            self.netstat_pids[pid]=[]
+    #                     if not pid in self.netstat_pids:
+    #                         self.netstat_pids[pid]=[]
 
-                        self.netstat_pids[pid].append(dict(
-                            ip_foreign=ip_foreign,
-                            ip_local=ip_local,
-                            ip_port_foreign=ip_port_foreign,
-                            ip_port_local=ip_port_local,
-                            pid=pid,
-                            port_foreign=port_foreign,
-                            port_local=port_local,
-                            proto=proto,
-                            state=state,
-                        ))
+    #                     self.netstat_pids[pid].append(dict(
+    #                         ip_foreign=ip_foreign,
+    #                         ip_local=ip_local,
+    #                         ip_port_foreign=ip_port_foreign,
+    #                         ip_port_local=ip_port_local,
+    #                         pid=pid,
+    #                         port_foreign=port_foreign,
+    #                         port_local=port_local,
+    #                         proto=proto,
+    #                         state=state,
+    #                     ))
 
 
     def set_processes(self):   
@@ -132,9 +133,11 @@ class Processes():
                         pproc=self.procs_by_pid[proc["ppid"]]
                         if not "node" in pproc:
                             if proc["pid"] == proc["ppid"]:
-                                proc["node"]=Node(dy=proc, netstat_pids=self.netstat_pids)
+                                proc["node"]=Node(dy=proc)
+                                # proc["node"]=Node(dy=proc, netstat_pids=self.netstat_pids)
                         else:
-                            proc["node"]=Node(dy=proc, parent=pproc["node"], netstat_pids=self.netstat_pids)
+                            proc["node"]=Node(dy=proc, parent=pproc["node"])
+                            # proc["node"]=Node(dy=proc, parent=pproc["node"], netstat_pids=self.netstat_pids)
                     else:
                         dy=dict(
                             name="unknown",
@@ -142,9 +145,11 @@ class Processes():
                             ppid=proc["ppid"],
                         )
                         self.procs_by_pid[proc["ppid"]]=dy;
-                        self.procs_by_pid[proc["ppid"]]["node"]=Node(dy=dy, netstat_pids=self.netstat_pids)
+                        self.procs_by_pid[proc["ppid"]]["node"]=Node(dy=dy)
+                        # self.procs_by_pid[proc["ppid"]]["node"]=Node(dy=dy, netstat_pids=self.netstat_pids)
                         pproc=self.procs_by_pid[proc["ppid"]]
-                        proc["node"]=Node(parent=pproc["node"], dy=proc, netstat_pids=self.netstat_pids)
+                        proc["node"]=Node(parent=pproc["node"], dy=proc)
+                        # proc["node"]=Node(parent=pproc["node"], dy=proc, netstat_pids=self.netstat_pids)
                         unknown=True
                         break
 
@@ -241,7 +246,7 @@ class Processes():
             "ppid",
             "name",
             "node",
-            "netstat",
+            # "netstat",
         ]
 
         if "all" in opts:
@@ -314,8 +319,8 @@ class Processes():
                                 space+=prefix
                         if opt == "pid":
                             field="{:<6}".format(value)
-                        elif opt == "netstat":
-                            pass # print after
+                        # elif opt == "netstat":
+                            # pass # print after
                         else:
                             field=value
                         show_fields+=space+str(field)
@@ -339,8 +344,8 @@ class Processes():
             if show is True:
                 if show_fields:
                     print(show_fields)
-                    if "netstat" in opts:
-                        print(''.join([ prefix+ "  " + l for l in pformat(pnode.dy["netstat"]).splitlines(True)]))
+                    # if "netstat" in opts:
+                        # print(''.join([ prefix+ "  " + l for l in pformat(pnode.dy["netstat"]).splitlines(True)]))
 
         recurse=False
         if depth is None:
