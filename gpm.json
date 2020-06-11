@@ -2,9 +2,12 @@
     "authors": [
         "Gabriel Auger"
     ],
-    "deps": [],
+    "deps": [
+        "ca72f0a9-8a9b-4ff6-a013-e5d0974cb1e5|options|8.0.1|gpm",
+        "df328dbe-54ab-4a6d-b7a2-932b0eaee30a|shell_helpers|5.1.0|gpm"
+    ],
     "description": "selenium python wrapper for browser automation",
-    "filen_main": "__init__.py",
+    "filen_main": "main.py",
     "gpm_version": "0.2.0",
     "installer": "gpm",
     "licenses": [
