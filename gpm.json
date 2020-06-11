@@ -1,0 +1,16 @@
+{
+    "authors": [
+        "Gabriel Auger"
+    ],
+    "deps": [],
+    "description": "selenium python wrapper for browser automation",
+    "filen_main": "__init__.py",
+    "gpm_version": "0.2.0",
+    "installer": "gpm",
+    "licenses": [
+        "MIT"
+    ],
+    "name": "selenium_wrapper",
+    "uuid4": "8af5aa64-70d1-4992-a53c-e9dcde67fc1f",
+    "version": "0.1.0"
+}
