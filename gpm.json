@@ -1,4 +1,7 @@
 {
+    "app": {
+        "direpa_media": "Y:\\bin\\selenium_media"
+    },
     "authors": [
         "Gabriel Auger"
     ],
