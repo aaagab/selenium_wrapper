@@ -481,7 +481,8 @@ class SeleniumServer():
 
     def scroll(self):
         from selenium.webdriver.common.keys import Keys
-        self.get_driver().find_element_by_css_selector("body").send_keys(Keys.CONTROL, Keys.END)
+        self.get_driver().execute_script("window.scrollTo(0,document.body.scrollHeight)")
+        # self.get_driver().find_element_by_css_selector("body").send_keys(Keys.CONTROL, Keys.END)
 
     def browser_focus(self):
         import ctypes
