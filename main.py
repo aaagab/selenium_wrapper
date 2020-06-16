@@ -66,7 +66,7 @@ if __name__ == "__main__":
             srv.refresh(wait_ms=args.refresh.value)
 
         if args.scroll.here:
-            srv.get_driver().scroll()
+            srv.get_driver().scroll(percent=args.scroll.value)
 
         if args.driver_info.here:
             pprint(srv.get_driver().dy)

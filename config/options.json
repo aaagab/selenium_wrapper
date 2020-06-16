@@ -43,8 +43,10 @@
         "values": "WAIT_MILLISECONDS"
     },
     "scroll": {
-        "info": "scroll bottom browser page",
-        "nested": true
+        "info": "scroll browser page. Default go bottom",
+        "nested": true,
+        "nvalues": "?",
+        "values": "PERCENTAGE"
     },
     "selenium_options": {
         "info": "Show all command line options for Selenium Server"
