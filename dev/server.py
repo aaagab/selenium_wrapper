@@ -6,6 +6,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 import threading
 
 from .processes import Processes
@@ -483,6 +484,11 @@ class SeleniumServer():
         from selenium.webdriver.common.keys import Keys
         self.get_driver().execute_script("window.scrollTo(0,document.body.scrollHeight)")
         # self.get_driver().find_element_by_css_selector("body").send_keys(Keys.CONTROL, Keys.END)
+
+    def refresh(self, wait_ms):
+        self.get_driver().refresh()
+        if wait_ms is not None:
+            time.sleep(float(wait_ms)/1000)
 
     def browser_focus(self):
         import ctypes
