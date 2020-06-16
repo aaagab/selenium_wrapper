@@ -22,11 +22,11 @@ if __name__ == "__main__":
 
     args, dy_app=pkg.Options(filenpa_app="gpm.json", filenpa_args="config/options.json", allow_empty=True).get_argsns_dy_app()
 
-    dy_app["direpa_app"]=direpa_script
-    dy_app["debug"]=args.debug.here
+    debug=args.debug.here
+    direpa_media="Y:\\bin\\selenium_media"
 
     if args.selenium_options.here:
-        srv=pkg.SeleniumServer(dy_app)
+        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         print()
         print("## Standalone")
         cmd=[ srv.filenpa_java, "-jar", srv.filenpa_selenium_server, "-help" ]
@@ -41,19 +41,19 @@ if __name__ == "__main__":
         subprocess.run(cmd)
         sys.exit(0)
     elif args.gui.here:
-        srv=pkg.SeleniumServer(dy_app)
+        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         srv.show_gui()
         sys.exit(0)
     elif args.exit.here:
-        srv=pkg.SeleniumServer(dy_app)
+        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         srv.reset()
         sys.exit(0)
     elif args.reset.here:
-        srv=pkg.SeleniumServer(dy_app)
+        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         srv.reset(args.drivers.values)
 
     if args.run.here:
-        srv=pkg.SeleniumServer(dy_app)
+        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         srv.run(args.driver.value, reset=args.reset.here)
 
         if args.focus.here:

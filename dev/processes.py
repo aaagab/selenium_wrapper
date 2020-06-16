@@ -53,8 +53,8 @@ class Node():
             #         tmp_parent=tmp_parent.parent
 
 class Processes():
-    def __init__(self, dy_app):
-        self.dy_app=dy_app
+    def __init__(self, debug=False):
+        self.debug=debug
 
     def init(self):
         self.procs_by_name=dict()
@@ -215,12 +215,12 @@ class Processes():
         except:
             cmd="taskkill /F /IM {}".format(pid_name)
         
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             print(cmd)
 
         proc=subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = proc.communicate()
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             if stdout:
                 print(stdout.decode())
             if stderr:

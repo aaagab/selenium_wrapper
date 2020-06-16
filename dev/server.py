@@ -11,6 +11,7 @@ import threading
 from .processes import Processes
 
 from ..gpkgs import shell_helpers as shell
+from ..gpkgs import message as msg
 
 r"""
 "C:\Users\john\Desktop\data\bin\selenium\selenium_server.py"
@@ -19,12 +20,19 @@ r"""
 from .windows import Windows
 
 class SeleniumServer():
-    def __init__(self, dy_app):
-        self.dy_app=dy_app
-        self.processes=Processes(self.dy_app)
+    def __init__(
+        self, 
+        debug=False,
+        direpa_media=None,
+    ):
+        self.debug=debug
+        self.processes=Processes(debug=self.debug)
         self.driver_data=None
         self.driver=None
-        self.direpa_media=self.dy_app["app"]["direpa_media"]
+        if direpa_media is None:
+            msg.error("direpa_media needs to be provided")
+            sys.exit(1)
+        self.direpa_media=direpa_media
         self.direpa_drivers=os.path.join(self.direpa_media, "drivers")
         self.filenpa_java=r"C:\Program Files\Java\jre1.8.0_251\bin\java"
         self.host="127.0.0.1"
@@ -49,10 +57,10 @@ class SeleniumServer():
                 if driver_data["session"] is None:
                     if driver_data["session_proc_name"] in netstats:
                         for netstat in netstats[driver_data["session_proc_name"]]:
-                            if self.dy_app["debug"] is True:
+                            if self.debug is True:
                                 self.processes.report(netstat["pid"], show=True, from_root=True, opts=["name", "pid"])
                             if self.is_session_driver(netstat["port"], session["id"]) is True:
-                                if self.dy_app["debug"] is True:
+                                if self.debug is True:
                                     print("For driver '{}' found active session '{}'".format(driver_name, session["id"]))
                                 driver_data["session"]=session
                                 driver_data["browser_session"]=netstat
@@ -61,7 +69,7 @@ class SeleniumServer():
     def get_sessions(self):
         pid=self.get_pid()
         cmd="curl {}/sessions".format(self.grid_url)
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             print(cmd)
         raw_curl=shell.cmd_get_value(cmd, none_on_error=True, no_err_if_std=True)
         if raw_curl is None:
@@ -115,7 +123,7 @@ class SeleniumServer():
                         port=port,
                     ))
 
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             print(cmd)
             print(regex)
             pprint(netstats)
@@ -129,7 +137,7 @@ class SeleniumServer():
 
         # port="5999"
         cmd="curl -sSL http://127.0.0.1:{}/session/{}".format(port, session_id)
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             print(cmd)
         proc=subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr=proc.communicate()
@@ -138,7 +146,7 @@ class SeleniumServer():
                 data=json.loads(stdout)
             except ValueError:
                 stdout=stdout.decode()
-                if self.dy_app["debug"] is True:
+                if self.debug is True:
                     print("stdout:", stdout)
                 if '"applicationType":"gecko"' in stdout: # firefox
                     return True
@@ -146,7 +154,7 @@ class SeleniumServer():
                     return True
                 return False
 
-            if self.dy_app["debug"] is True:
+            if self.debug is True:
                 print("stdout data:")
                 pprint(data)
 
@@ -166,13 +174,13 @@ class SeleniumServer():
             else:
                 return False
         elif stderr:
-            if self.dy_app["debug"] is True:
+            if self.debug is True:
                 print("stderr: {}".format(stderr.decode()))
 
             return False
         else:
             # google chrome returns nothing
-            if self.dy_app["debug"] is True:
+            if self.debug is True:
                 print("no stderr or stdout, returns empty")
             return True
 
@@ -181,8 +189,6 @@ class SeleniumServer():
             # TCP    0.0.0.0:4444           0.0.0.0:0              LISTENING       23216
             reg_server=re.match(r"^\s+TCP\s+{}:{}\s+0.0.0.0:0\s+LISTENING\s+([0-9]+)$".format(self.host, self.port),line)
             if reg_server:
-                # if self.dy_app.quiet is False:
-                    # print(line)
                 pid=reg_server.group(1)
                 return pid
         return None
@@ -293,7 +299,7 @@ class SeleniumServer():
         return new_driver
 
     def close_driver(self, driver_data):
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             print("Close Selenium Driver '{}'".format(driver_data["driver_proc_name"]))
         if driver_data["driver_proc_name"] in self.processes.procs_by_name:
             self.processes.kill(driver_data["driver_proc_name"])
@@ -309,7 +315,7 @@ class SeleniumServer():
             # print(browser)
             if browser["node"].parent.dy["name"] != driver_data["filen_browser"]:
                 root_browsers.append(browser)
-                if self.dy_app["debug"] is True:
+                if self.debug is True:
                     self.processes.report(browser["pid"], show=True, from_root=True, opts=["name", "pid"])
                     print()
         
@@ -337,7 +343,7 @@ class SeleniumServer():
         return selenium_browsers
 
     def close_driver_browsers(self, driver_data):
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             print("Close Selenium Browsers '{}'".format(driver_data["filen_browser"]))
         for browser in self.get_selenium_browsers(driver_data):
             pid=None
@@ -349,7 +355,7 @@ class SeleniumServer():
             pass
 
     def close_sessions(self):
-        if self.dy_app["debug"] == True:
+        if self.debug == True:
             print("Close All Sessions")
         # pprint(self.drivers_data)
         for session in self.get_sessions():
@@ -385,7 +391,7 @@ class SeleniumServer():
 
         pid=self.get_pid()
         if reset is True:
-            if self.dy_app["debug"] is True:
+            if self.debug is True:
                 print("Start or Restart '{}'".format(os.path.basename(self.filenpa_selenium_server)))
             if pid is not None:
                 self.processes.kill(pid)
@@ -419,14 +425,14 @@ class SeleniumServer():
                 if a == 0:
                     prefix=""
                 cmd_str+=prefix+arg
-            if self.dy_app["debug"] is True:
+            if self.debug is True:
                 print(cmd_str)
             pid=subprocess.Popen(cmd, creationflags=DETACHED_PROCESS).pid
             status="started"
         else:
             status="already running"
 
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             print("Process '{}' '{}' '{}'".format(
                 pid,
                 status,
@@ -437,7 +443,7 @@ class SeleniumServer():
     # )
     def get_browser_window(self, driver_data):
         browsers= self.get_root_browsers(driver_data)
-        if self.dy_app["debug"] is True:
+        if self.debug is True:
             print(browsers)
         if driver_data["name"] == "edge":
             return self.processes.procs_by_name["MicrosoftEdgeCP.exe"][0]
@@ -483,7 +489,7 @@ class SeleniumServer():
         # print(self.get_window())
         # user32 = ctypes.windll.user32
         pid=self.get_driver().dy["browser_window"]["pid"]
-        Windows(debug=self.dy_app["debug"]).focus(pid)
+        Windows(debug=self.debug).focus(pid)
         # for window in 
         # Windows().list_windows()
             # print(window)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # author: Gabriel Auger
-# version: 1.1.0
+# version: 2.0.0
 # name: release
 # license: MIT
 
-__version__ = "1.1.0"
+__version__ = "2.0.0"
 
 from .dev.obj_info import get_obj_info
 from .dev.server import SeleniumServer
