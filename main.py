@@ -52,9 +52,9 @@ if __name__ == "__main__":
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         srv.reset(args.drivers.values)
 
-    if args.run.here:
+    if args.connect.here:
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
-        srv.run(args.driver.value, reset=args.reset.here)
+        srv.connect(args.driver.value, reset=args.reset.here)
 
         if args.focus.here:
             srv.browser_focus()

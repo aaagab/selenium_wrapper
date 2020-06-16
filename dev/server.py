@@ -384,7 +384,7 @@ class SeleniumServer():
         if server_pid is not None:
             self.processes.kill(server_pid)
 
-    def run(self, driver_name, reset=False):
+    def connect(self, driver_name, reset=False):
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         # tasklist=shell.cmd_get_value("tasklist")
         self.set_driver_data(driver_name)
