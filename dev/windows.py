@@ -96,7 +96,10 @@ class Windows():
 
     def show_window(self, hwnd):
         SW_RESTORE=9
-        self.user32.ShowWindow(hwnd, SW_RESTORE)
+        SW_SHOW=5
+        SW_SHOWNORMAL=1
+        if self.user32.IsIconic(hwnd): # if minized, restore
+            self.user32.ShowWindow(hwnd, SW_RESTORE)
 
     # h_wnd = user32.GetForegroundWindow()
     # pid = wintypes.DWORD()
