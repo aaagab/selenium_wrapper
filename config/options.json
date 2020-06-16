@@ -1,4 +1,10 @@
 {
+    "connect": {
+        "aliases": "--connect,--conn,-c",
+        "args": "driver,url,focus,refresh,scroll",
+        "info": "Launch a selected driver on top of the grid",
+        "required": "driver"
+    },
     "debug": {
         "info": "display info in realtime for debugging"
     },
@@ -29,11 +35,6 @@
     "reset": {
         "args": "drivers",
         "info": "Reset Selenium Server"
-    },
-    "run": {
-        "args": "driver,url,focus,refresh,scroll",
-        "info": "Launch a selected driver on top of the grid",
-        "required": "driver"
     },
     "refresh": {
         "info": "refresh browser page",
