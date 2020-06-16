@@ -63,7 +63,7 @@ if __name__ == "__main__":
             srv.get_driver().get(args.url.value)
 
         if args.refresh.here:
-            srv.get_driver().refresh()
+            srv.refresh(wait_ms=args.refresh.value)
 
         if args.scroll.here:
             srv.get_driver().scroll()

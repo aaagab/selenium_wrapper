@@ -38,7 +38,9 @@
     },
     "refresh": {
         "info": "refresh browser page",
-        "nested": true
+        "nested": true,
+        "nvalues": "?",
+        "values": "WAIT_MILLISECONDS"
     },
     "scroll": {
         "info": "scroll bottom browser page",
