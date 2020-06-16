@@ -480,7 +480,7 @@ class SeleniumServer():
             self.driver_data["browser_window"]=self.get_browser_window(self.driver_data)
         return self.driver
 
-    def scroll(self, percent):
+    def scroll(self, percent=None):
         from selenium.webdriver.common.keys import Keys
         if percent is None:
             percent=100
@@ -496,7 +496,7 @@ class SeleniumServer():
         self.get_driver().execute_script("window.scrollTo(0,{})".format(scroll_height))
         # self.get_driver().find_element_by_css_selector("body").send_keys(Keys.CONTROL, Keys.END)
 
-    def refresh(self, wait_ms):
+    def refresh(self, wait_ms=None):
         self.get_driver().refresh()
         if wait_ms is not None:
             time.sleep(float(wait_ms)/1000)
