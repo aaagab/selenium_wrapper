@@ -88,12 +88,28 @@ class Windows():
                 print(window)
             if window["pid"] == int(pid):
                 found=True
+                self.show_window(window["hwnd"])
                 self.user32.SetForegroundWindow(window["hwnd"])
                 break
         if found is False:
             print("No Window Found for pid '{}'".format(pid))
 
+    def show_window(self, hwnd):
+        SW_RESTORE=9
+        self.user32.ShowWindow(hwnd, SW_RESTORE)
+
     # h_wnd = user32.GetForegroundWindow()
     # pid = wintypes.DWORD()
     # user32.GetWindowThreadProcessId(h_wnd, ctypes.byref(pid))
     # print(pid.value)
+
+
+# To minimize a window you need to know either the title of the window, or its window class. The window class is useful when the exact window title is not known. For example the following script shows two different ways to minimize the Microsoft Windows Notepad application assuming:
+# import ctypes
+# notepad_handle = ctypes.windll.user32.FindWindowW(None, "Untitled - Notepad")
+# ctypes.windll.user32.ShowWindow(notepad_handle, 6)
+# notepad_handle = ctypes.windll.user32.FindWindowW(u"Notepad", None) 
+# ctypes.windll.user32.ShowWindow(notepad_handle, 6)  
+# To determine the class name to use, you would need to use an tool such as Microsoft's Spy++. Obviously if Notepad was opened with a file, it would have a different title such as test.txt - Notepad. If this was the case, the first example would now fail to find the window, but the second example would still work.
+# If two copies of notepad were running, then only one would be closed. If all copies needed to be closed, you would need to enumerate all windows which requires more code.
+# The ShowWindow command can also be used to restore the Window. The 6 used here is the Windows code for SW_MINIMIZE.
