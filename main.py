@@ -72,12 +72,14 @@ if __name__ == "__main__":
             pprint(srv.get_driver().dy)
 
 
+        # # Test section
+        # srv.get_elem("email_input")
 
-    # driver_name=dy_app.get_arg_values("--driver", ret="value", get_values=False)
-    # if driver_name is not None:
-    #     # print(srv.get_driver().dy["session"]["id"])
-    #     # print(srv.get_driver().dy["browser_session"])
-    #     # print(srv.get_driver().dy["browser_window"])
+        # driver_name=dy_app.get_arg_values("--driver", ret="value", get_values=False)
+        # if driver_name is not None:
+        #     # print(srv.get_driver().dy["session"]["id"])
+        #     # print(srv.get_driver().dy["browser_session"])
+        #     # print(srv.get_driver().dy["browser_window"])
 
-    #     srv.browser_focus()
-    #     srv.get_driver().refresh()
+        #     srv.browser_focus()
+        #     srv.get_driver().refresh()
