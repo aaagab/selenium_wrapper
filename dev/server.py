@@ -13,6 +13,7 @@ from .processes import Processes
 
 from ..gpkgs import shell_helpers as shell
 from ..gpkgs import message as msg
+from ..gpkgs.timeout import TimeOut
 
 r"""
 "C:\Users\john\Desktop\data\bin\selenium\selenium_server.py"
@@ -477,8 +478,32 @@ class SeleniumServer():
 
             setattr(self.driver, "dy", self.driver_data)
             setattr(self.driver, "scroll", self.scroll)
+            setattr(self.driver, "get_elem", self.get_elem)
             self.driver_data["browser_window"]=self.get_browser_window(self.driver_data)
         return self.driver
+
+    def get_elem(self, 
+        id, 
+        wait_ms=2000,
+        error=True
+    ):
+        timer=TimeOut(wait_ms, unit="milliseconds").start()
+        elem=None
+        while True:
+            if timer.has_ended(pause=.001):
+                if error is True:
+                    msg.error("element not found '{}'".format(id))
+                    sys.exit(1)
+                else:
+                    return False
+            
+            try:
+                elem=self.get_driver().find_element_by_id(id)
+                break
+            except BaseException as e:
+                if e.__class__.__name__ == "NoSuchElementException":
+                    continue
+        return elem
 
     def scroll(self, percent=None):
         from selenium.webdriver.common.keys import Keys
