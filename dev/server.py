@@ -496,7 +496,6 @@ class SeleniumServer():
                     sys.exit(1)
                 else:
                     return False
-            
             try:
                 elem=self.get_driver().find_element_by_id(id)
                 break
@@ -526,9 +525,18 @@ class SeleniumServer():
         if wait_ms is not None:
             time.sleep(float(wait_ms)/1000)
 
+    def window_focus(self, exe_name):
+        if not exe_name in self.processes.procs_by_name:
+            msg.error("Process not found '{}'".format(exe_name))
+            sys.exit(1)
+        pid=self.processes.procs_by_name[exe_name][0]["pid"]
+        Windows(debug=self.debug).focus(pid)
+
+        # pid=self.get_driver().dy["browser_window"]["pid"]
+        # Windows(debug=self.debug).focus(pid)
+
+
     def browser_focus(self):
-        import ctypes
-        from ctypes import wintypes
         # print(self.get_window())
         # user32 = ctypes.windll.user32
         pid=self.get_driver().dy["browser_window"]["pid"]

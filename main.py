@@ -72,6 +72,10 @@ if __name__ == "__main__":
             pprint(srv.get_driver().dy)
 
 
+        # srv.window_focus("putty.exe")
+        # srv.window_focus("Code.exe")
+
+
         # # Test section
         # srv.get_elem("email_input")
 
