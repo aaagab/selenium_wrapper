@@ -1,7 +1,15 @@
 {
+    "accessibility": {
+        "aliases": "-a,--access,--accessibility",
+        "info": "it loads site improve addons and click the addons buttons"
+    },
+    "cmd": {
+        "info": "During development of selenium wrapper keep command line on top",
+        "nested": true
+    },
     "connect": {
         "aliases": "--connect,--conn,-c",
-        "args": "driver,url,focus,refresh,scroll",
+        "args": "cmd,driver,url,focus,refresh,scroll",
         "info": "Launch a selected driver on top of the grid",
         "required": "driver"
     },
@@ -21,6 +29,9 @@
         "nested": true,
         "nvalues": "*",
         "values": "DRIVER_NAME"
+    },
+    "examples": {
+
     },
     "exit": {
         "info": "Close All Selenium processes"
