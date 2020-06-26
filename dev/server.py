@@ -24,6 +24,7 @@ from .windows import Windows
 class SeleniumServer():
     def __init__(
         self, 
+        accessibility=False,
         debug=False,
         direpa_media=None,
     ):
@@ -43,10 +44,12 @@ class SeleniumServer():
         self.filenpa_selenium_server=os.path.join(self.direpa_media, "selenium-server-standalone-3.141.59.jar")
         self.filenpa_webdrivermanager=os.path.join(self.direpa_media, "webdrivermanager-4.0.0-fat.jar")
         self.direpa_logs=os.path.join(self.direpa_media, "logs")
+        self.direpa_extensions=os.path.join(self.direpa_media, "extensions")
         self.filenpa_log=os.path.join(self.direpa_logs, "server.txt")
         self.filenpa_drivers_info=os.path.join(self.direpa_drivers, "info.txt")
-        self.set_drivers_data()
+        self.set_drivers_data(accessibility)
         self.processes.init()
+        self.windows=Windows(debug=self.debug)
 
     def set_sessions(self):
         sessions=self.get_sessions()
@@ -202,7 +205,7 @@ class SeleniumServer():
             for session in driver["sessions"]:
                 os.system("firefox.exe {}/session/{}".format(self.grid_url, session["id"]))
         
-    def set_drivers_data(self):
+    def set_drivers_data(self, accessibility):
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         self.drivers_data=dict()
         self.driver_names=[
@@ -266,6 +269,7 @@ class SeleniumServer():
             driver["session_proc_name"]=session_proc_name
             driver["filenpa_log"]=os.path.join(self.direpa_logs, "client_{}.txt".format(name))
             driver["session"]=None
+            driver["direpa_extensions"]=os.path.join(self.direpa_extensions, driver["name"])
 
             driver["dwebdriver_args"]="-Dwebdriver.{driver_label}.driver={filenpa_exe}\n-Dwebdriver.{log_label}.logfile={filenpa_log}\n-Dwebdriver.{log_label}.loglevel=DEBUG".format(
                 driver_label=driver_label,
@@ -274,6 +278,15 @@ class SeleniumServer():
                 filenpa_log=driver["filenpa_log"],    
             ).splitlines()
             driver["capabilities"]=getattr(DesiredCapabilities, capability_name)
+
+            if name == "chrome" and accessibility is True:
+                from selenium import webdriver 
+                from selenium.webdriver.chrome.options import Options as ChromeOptions
+
+                chrome_options=ChromeOptions()
+                chrome_options.add_extension(os.path.join(driver["direpa_extensions"], "site_improve_126_0.crx"))
+                driver["capabilities"]=chrome_options.to_capabilities()
+               
 
     def create_driver_session(self, session_id):
         from selenium import webdriver
@@ -530,17 +543,17 @@ class SeleniumServer():
             msg.error("Process not found '{}'".format(exe_name))
             sys.exit(1)
         pid=self.processes.procs_by_name[exe_name][0]["pid"]
-        Windows(debug=self.debug).focus(pid)
+        self.windows.focus(pid)
 
         # pid=self.get_driver().dy["browser_window"]["pid"]
-        # Windows(debug=self.debug).focus(pid)
+        # self.windows.focus(pid)
 
 
     def browser_focus(self):
         # print(self.get_window())
         # user32 = ctypes.windll.user32
         pid=self.get_driver().dy["browser_window"]["pid"]
-        Windows(debug=self.debug).focus(pid)
+        self.windows.focus(pid)
         # for window in 
         # Windows().list_windows()
             # print(window)

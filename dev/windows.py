@@ -105,7 +105,7 @@ class Windows():
         h_wnd = self.user32.GetForegroundWindow()
         pid = wintypes.DWORD()
         self.user32.GetWindowThreadProcessId(h_wnd, ctypes.byref(pid))
-        print(pid.value)
+        return pid.value
 
 
 # To minimize a window you need to know either the title of the window, or its window class. The window class is useful when the exact window title is not known. For example the following script shows two different ways to minimize the Microsoft Windows Notepad application assuming:
