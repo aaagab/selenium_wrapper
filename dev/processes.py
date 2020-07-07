@@ -103,6 +103,42 @@ class Processes():
     #                         state=state,
     #                     ))
 
+    # def get_parent_pids(self, procs_by_pid, pnode=None):
+    #     # pprint(dy_nodes)
+    #     # go through all nodes,
+    #     # if ppid not found or pid == ppid then create a node parent
+    #     else 
+    #     create a node and for parent get ppid node 
+    #     so go for ppid node i
+    #     pass
+    #     for pid, proc in procs_by_pid.items():
+    #         if (pid == proc["ppid"]):
+    #             procs_by_pid[pid]["node"]=Node(dy=proc)
+    #         else:
+    #             if proc["ppid"] in procs_by_pid:
+    #                 pass
+    #                 print("found")
+    #             else:
+    #                 print("not found")
+
+                # if(pid, proc["ppid"])
+
+    def get_parent_pids(self, pid, level=0, parents=[]):
+        if pid not in parents:
+            if pid in self.procs_by_pid:
+                # input("{}{}".format(" "*level,pid))
+                parents.append(pid)
+                proc=self.procs_by_pid[pid]
+                if pid == proc["ppid"]:
+                    pass
+                else:
+                    self.get_parent_pids(proc["ppid"], level+1, parents)
+        else:
+            # print("stopped recursion")
+            pass
+
+        if level == 0:
+            return parents
 
     def set_processes(self):   
         header=True
@@ -123,46 +159,20 @@ class Processes():
                 )
                 self.procs_by_pid[pid]=proc
 
-        while True:
-            unknown=False
-            all_checked=True
-            for pid, proc in self.procs_by_pid.items():
-                if not "node" in proc:
-                    all_checked=False
-                    if proc["ppid"] in self.procs_by_pid:
-                        pproc=self.procs_by_pid[proc["ppid"]]
-                        if not "node" in pproc:
-                            if proc["pid"] == proc["ppid"]:
-                                proc["node"]=Node(dy=proc)
-                                # proc["node"]=Node(dy=proc, netstat_pids=self.netstat_pids)
-                        else:
-                            proc["node"]=Node(dy=proc, parent=pproc["node"])
-                            # proc["node"]=Node(dy=proc, parent=pproc["node"], netstat_pids=self.netstat_pids)
-                    else:
-                        dy=dict(
-                            name="unknown",
-                            pid=proc["ppid"],
-                            ppid=proc["ppid"],
-                        )
-                        self.procs_by_pid[proc["ppid"]]=dy;
-                        self.procs_by_pid[proc["ppid"]]["node"]=Node(dy=dy)
-                        # self.procs_by_pid[proc["ppid"]]["node"]=Node(dy=dy, netstat_pids=self.netstat_pids)
-                        pproc=self.procs_by_pid[proc["ppid"]]
-                        proc["node"]=Node(parent=pproc["node"], dy=proc)
-                        # proc["node"]=Node(parent=pproc["node"], dy=proc, netstat_pids=self.netstat_pids)
-                        unknown=True
-                        break
-
-            if unknown is False:
-                if all_checked is True:
-                    break
-                
-                
-
         for pid, proc in self.procs_by_pid.items():
-            if not proc["name"] in self.procs_by_name:
-                self.procs_by_name[proc["name"]]=[]
-            self.procs_by_name[proc["name"]].append(proc)
+            if not "node" in proc:
+                tmp_pids=[p for p in reversed(self.get_parent_pids(pid, parents=[]))]
+                for t, tmp_pid in enumerate(tmp_pids):
+                    tmp_proc=self.procs_by_pid[tmp_pid]
+                    if not "node" in tmp_proc:
+                        parent_node=None
+                        if t > 0:
+                            parent_node=self.procs_by_pid[tmp_pids[t-1]]["node"]
+                        tmp_proc["node"]=Node(dy=tmp_proc, parent=parent_node)
+
+                        if not tmp_proc["name"] in self.procs_by_name:
+                            self.procs_by_name[tmp_proc["name"]]=[]
+                        self.procs_by_name[tmp_proc["name"]].append(tmp_proc)
 
         # browsers=self.from_name("iexplore.exe")
         # pprint(browsers)

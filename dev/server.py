@@ -51,6 +51,7 @@ class SeleniumServer():
         self.processes.init()
         self.windows=Windows(debug=self.debug)
 
+
     def set_sessions(self):
         sessions=self.get_sessions()
         if sessions:
@@ -327,13 +328,12 @@ class SeleniumServer():
         # can you check if a windows exists for a pid.
         root_browsers=[]
         for browser in browsers:
-            # print(browser)
-            if browser["node"].parent.dy["name"] != driver_data["filen_browser"]:
+            if browser["node"].parent is None or (browser["node"].parent.dy["name"] != driver_data["filen_browser"]):
                 root_browsers.append(browser)
                 if self.debug is True:
                     self.processes.report(browser["pid"], show=True, from_root=True, opts=["name", "pid"])
                     print()
-        
+
         return root_browsers
 
     # def is_selenium_browser(self, ):
