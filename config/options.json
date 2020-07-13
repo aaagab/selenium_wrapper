@@ -9,7 +9,7 @@
     },
     "connect": {
         "aliases": "--connect,--conn,-c",
-        "args": "cmd,driver,url,focus,refresh,scroll",
+        "args": "cmd,driver,url,focus,page,refresh,scroll",
         "info": "Launch a selected driver on top of the grid",
         "required": "driver"
     },
@@ -43,6 +43,25 @@
     "gui": {
         "info": "Open a browser to access the grid url and show the different sessions if any"
     },
+    "hostname": {
+        "info": "provide a hostname to complete a url with relative path",
+        "nested": true,
+        "values": "STRING"
+    },
+    "path_project": {
+        "info": "mainly use to get the hostname info for the relative url. If not set path project is the current directory.",
+        "values": "PATH"
+    },
+    "page": {
+        "info": "this function needs that the current project have a file named hostname_url.txt with the hostname path. The you can use --page without argument to get to the home page. Otherwise use --page login to reach to hostname/login and so on",
+        "nested": true
+    },
+    "params": {
+        "info": "add url parameters by providing a json file (can be relative) or a json string (double or single quotes).",
+        "nested": true,
+        "type": "json",
+        "values": "KEYS_VALUES"
+    },
     "reset": {
         "args": "drivers",
         "info": "Reset Selenium Server"
@@ -64,7 +83,13 @@
     },
     "url": {
         "info": "set browser url",
+        "args": "url_alias,hostname,params",
         "nested": true,
         "values": "URL"
+    },
+    "url_alias": {
+        "nested": true,
+        "info": "default is hostname_url",
+        "values": "NAME"
     }
 }
