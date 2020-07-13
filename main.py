@@ -45,7 +45,9 @@ if __name__ == "__main__":
         sys.exit(0)
     elif args.examples.here:
         print("""
-        main.py --connect --driver chrome --accessibility --refresh --url https://www.example.com/e/example/login
+selenium_wrapper --connect --driver chrome --accessibility --refresh --url https://www.example.com/e/example/login
+selenium_wrapper --connect --driver firefox --url departments --path-project A:\wrk\e\example\1\src --params "{'fruit':'apple','region':'greenland'}"
+selenium_wrapper --connect --driver firefox --url departments --hostname https://www.example.com/e/example
         """)
         sys.exit(0)
     elif args.gui.here:
@@ -76,7 +78,18 @@ if __name__ == "__main__":
             srv.browser_focus()
 
         if args.url.here:
-            srv.get_driver().get(args.url.value)
+            url_alias=args.url_alias.value
+            if url_alias is None:
+                url_alias="hostname_url"
+            url=pkg.geturl(
+                args.url.value,
+                alias=url_alias, 
+                direpa_project=args.path_project.value,
+                hostname_path=args.hostname.value,
+                params=args.params.value,
+            )
+            srv.get_driver().get(url)
+
 
         if args.refresh.here:
             srv.refresh(wait_ms=args.refresh.value)
@@ -93,7 +106,6 @@ if __name__ == "__main__":
                 print("Not Found button.png")
                 sys.exit(1)
             pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
-
 
         if args.driver_info.here:
             pprint(srv.get_driver().dy)
