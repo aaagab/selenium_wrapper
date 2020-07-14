@@ -208,6 +208,8 @@ class SeleniumServer():
         
     def set_drivers_data(self, accessibility):
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium import webdriver 
+
         self.drivers_data=dict()
         self.driver_names=[
             "chrome",
@@ -281,13 +283,16 @@ class SeleniumServer():
             driver["capabilities"]=getattr(DesiredCapabilities, capability_name)
 
             if name == "chrome" and accessibility is True:
-                from selenium import webdriver 
                 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
                 chrome_options=ChromeOptions()
                 chrome_options.add_extension(os.path.join(driver["direpa_extensions"], "site_improve_126_0.crx"))
                 driver["capabilities"]=chrome_options.to_capabilities()
-               
+            elif name == "iexplorer":
+                # solve issue:  Protected Mode settings are not the same for all zones.
+                options = webdriver.IeOptions()
+                options.ignore_protected_mode_settings = True
+                driver["capabilities"]=options.to_capabilities()
 
     def create_driver_session(self, session_id):
         from selenium import webdriver
