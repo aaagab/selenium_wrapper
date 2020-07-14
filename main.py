@@ -27,7 +27,6 @@ if __name__ == "__main__":
     debug=args.debug.here
     direpa_media="Y:\\bin\\selenium_media"
 
-
     if args.selenium_options.here:
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         print()
