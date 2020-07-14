@@ -350,11 +350,14 @@ class SeleniumServer():
             if driver_data["name"] == "edge":
                 selenium_browsers.append(browser)
             elif driver_data["name"] == "firefox":
-                # pprint(browser)
                 if len(browser["node"].nodes) == 1:
                     child=browser["node"].nodes[0]
                     if len(child.nodes) > 0:
                         selenium_browsers.append(browser)
+                else:
+                    if len(browser["netstat"]) > 0:
+                        if browser["netstat"][0]["state"] == "LISTENING":
+                            selenium_browsers.append(browser)
             else:
                 parent_first=browser["node"].parent
                 if parent_first.dy["name"] in [driver_data["filen_exe"], "unknown"]: # selenium browser
@@ -365,9 +368,11 @@ class SeleniumServer():
     def close_driver_browsers(self, driver_data):
         if self.debug is True:
             print("Close Selenium Browsers '{}'".format(driver_data["filen_browser"]))
+        
         for browser in self.get_selenium_browsers(driver_data):
             pid=None
             if driver_data["name"] == "firefox":
+                print(browser)
                 pid=browser["node"].nodes[0].dy["pid"]
             else:
                 pid=browser["pid"]
