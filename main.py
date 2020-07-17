@@ -96,6 +96,36 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
         if args.scroll.here:
             srv.get_driver().scroll(percent=args.scroll.value)
 
+        # if args.clear_cache.here:
+        #     driver=srv.get_driver()
+        #     if driver.dy["name"] == "firefox": 
+        #         print("continue")
+
+        #         dialog_selector = '#dialogOverlay-0 > groupbox:nth-child(1) > browser:nth-child(2)'
+        #         accept_dialog_script = (
+        #             f"const browser = document.querySelector('{dialog_selector}');" +
+        #             "browser.contentDocument.documentElement.querySelector('#clearButton').click();"
+        #         )
+        #         driver.get('about:preferences#privacy')
+        #         driver.get_elem("clearSiteDataButton", wait_ms=3000).click()
+        #         # driver.find_element_by_css_selector("#clearButton")
+        #         driver.get_elem("clearButton", wait_ms=3000).click()
+        #         sys.exit()
+        #         wait = WebDriverWait(driver, timeout)
+
+        #         # Click the "Clear Data..." button under "Cookies and Site Data".
+        #         wait.until(get_clear_site_data_button)
+        #         get_clear_site_data_button(driver).click()
+
+        #         # Accept the "Clear Data" dialog by clicking on the "Clear" button.
+        #         wait.until(get_clear_site_data_dialog)
+        #         driver.execute_script(accept_dialog_script)
+
+        #         # Accept the confirmation alert.
+        #         wait.until(EC.alert_is_present())
+        #         alert = Alert(driver)
+        #         alert.accept()
+
         if args.accessibility.here:
             import pyautogui
             # you have to take a screenshot of the button

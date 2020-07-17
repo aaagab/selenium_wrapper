@@ -372,7 +372,6 @@ class SeleniumServer():
         for browser in self.get_selenium_browsers(driver_data):
             pid=None
             if driver_data["name"] == "firefox":
-                print(browser)
                 pid=browser["node"].nodes[0].dy["pid"]
             else:
                 pid=browser["pid"]
