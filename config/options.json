@@ -7,6 +7,9 @@
         "info": "During development of selenium wrapper keep command line on top",
         "nested": true
     },
+    "clear_cache": {
+        "show": false
+    },
     "connect": {
         "aliases": "--connect,--conn,-c",
         "args": "cmd,driver,url,focus,page,refresh,scroll",
