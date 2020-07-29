@@ -12,9 +12,13 @@
     },
     "connect": {
         "aliases": "--connect,--conn,-c",
-        "args": "cmd,driver,url,focus,page,refresh,scroll",
+        "args": "cmd,console,driver,url,focus,page,refresh,scroll",
         "info": "Launch a selected driver on top of the grid",
         "required": "driver"
+    },
+    "console": {
+        "info": "open browser console",
+        "nested": true
     },
     "debug": {
         "info": "display info in realtime for debugging"

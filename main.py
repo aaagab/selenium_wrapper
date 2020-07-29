@@ -8,6 +8,8 @@ import subprocess
 import shlex
 import traceback
 
+import pyautogui
+
 # pip3 install pyautogui
 
 # mklink /H "C:\Users\john\Desktop\data\bin\selenium.py" "C:\Users\john\Desktop\data\bin\selenium\main.py"
@@ -120,6 +122,12 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
 
         if args.scroll.here:
             srv.get_driver().scroll(percent=args.scroll.value)
+
+        if args.console.here:
+            if args.focus.here is False:
+                srv.browser_focus()
+            pyautogui.hotkey('ctrl', 'shift', 'k')
+           
 
         # if args.clear_cache.here:
         #     driver=srv.get_driver()
