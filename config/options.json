@@ -51,6 +51,10 @@
         "nested": true,
         "values": "STRING"
     },
+    "insecure": {
+        "info": "allow to bypass InsecureCertificateException",
+        "nested": true
+    },
     "path_project": {
         "info": "mainly use to get the hostname info for the relative url. If not set path project is the current directory.",
         "values": "PATH"
@@ -86,7 +90,7 @@
     },
     "url": {
         "info": "set browser url",
-        "args": "url_alias,hostname,params",
+        "args": "url_alias,hostname,params,insecure",
         "nested": true,
         "values": "URL"
     },

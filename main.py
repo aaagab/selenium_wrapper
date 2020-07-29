@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 import shlex
+import traceback
 
 # pip3 install pyautogui
 
@@ -87,11 +88,35 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
                 hostname_path=args.hostname.value,
                 params=args.params.value,
             )
-            srv.get_driver().get(url)
+
+            if args.insecure.here:
+                confirmCert=False
+                try:
+                    srv.get_driver().get(url)
+                except BaseException as e:
+                    if e.__class__.__name__ == "InsecureCertificateException":
+                        print("Override certificate Exception")
+                        confirmCert=True
+                    else:
+                        print(traceback.format_exc())
+
+                if confirmCert is True:
+                    if srv.get_driver().dy["name"] == "firefox":
+                        srv.get_driver().find_element_by_id("advancedButton").click()
+                        srv.get_driver().find_element_by_id("exceptionDialogButton").click()
+                    else:
+                        print("needs to be implemented")
+                        sys.exit()
+            else:
+                srv.get_driver().get(url)
+
+
 
 
         if args.refresh.here:
             srv.refresh(wait_ms=args.refresh.value)
+
+        
 
         if args.scroll.here:
             srv.get_driver().scroll(percent=args.scroll.value)
