@@ -293,6 +293,15 @@ class SeleniumServer():
                 options = webdriver.IeOptions()
                 options.ignore_protected_mode_settings = True
                 driver["capabilities"]=options.to_capabilities()
+            # elif name == "firefox":
+            #     print("sdfsdfsdfsd")
+            #     options = webdriver.FirefoxOptions()
+            #     options.log.level = "trace"
+            #     options.add_argument("-devtools")
+            #     if 'headless' in os.environ and os.environ['headless'] == '1':
+            #         options.headless = True
+            #     driver["capabilities"]=options.to_capabilities()
+                
 
     def create_driver_session(self, session_id):
         from selenium import webdriver
