@@ -23,6 +23,12 @@
     "debug": {
         "info": "display info in realtime for debugging"
     },
+    "delay": {
+        "info": "add delay before command",
+        "nested": true,
+        "nvalues": "?",
+        "values": "WAIT_MILLISECONDS"
+    },
     "driver": {
         "info": "select driver from (chrome, edge, firefox, iexplorer)",
         "nested": true,
@@ -84,6 +90,7 @@
         "values": "WAIT_MILLISECONDS"
     },
     "scroll": {
+        "args": "delay",
         "info": "scroll browser page. Default go bottom",
         "nested": true,
         "nvalues": "?",
