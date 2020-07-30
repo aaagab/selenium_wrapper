@@ -118,10 +118,8 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
         if args.refresh.here:
             srv.refresh(wait_ms=args.refresh.value)
 
-        
-
         if args.scroll.here:
-            srv.get_driver().scroll(percent=args.scroll.value)
+            srv.get_driver().scroll(percent=args.scroll.value, wait_ms=args.delay.value)
 
         if args.console.here:
             if args.focus.here is False:
