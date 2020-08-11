@@ -483,8 +483,19 @@ class SeleniumServer():
             # print(browsers[0]["node"].nodes)
         elif driver_data["name"] == "iexplorer":
             for browser in browsers:
+                print(browser, self.driver_data["browser_session"])
                 if browser["ppid"] == self.driver_data["browser_session"]["pid"]:
                     return browser
+
+            hasBeenKilled=False
+            for browser in browsers:
+                hasBeenKilled=True
+                self.processes.kill(browser["pid"])
+
+            if hasBeenKilled is True:
+                msg.error("Stalled browser for '{}' has been killed please relaunch command".format(driver_data["name"]), exit=1)
+            else:
+                msg.error("No Suitable existing browser has been found for '{}'. Try reset".format(driver_data["name"]), exit=1)
         elif driver_data["name"] in ["firefox", "chrome"]:
             return self.processes.from_pid(self.driver_data["browser_session"]["pid"])
         # elif driver_data["name"] == "chrome":
