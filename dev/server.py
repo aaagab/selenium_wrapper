@@ -537,7 +537,7 @@ class SeleniumServer():
                     msg.error("element not found '{}'".format(id))
                     sys.exit(1)
                 else:
-                    return False
+                    return None
             try:
                 elem=self.get_driver().find_element_by_id(id)
                 break

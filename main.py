@@ -71,10 +71,16 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
         if args.cmd.here:
             cmd_pid=srv.windows.get_active()
 
-        if args.connect.here:
-            srv.connect(args.driver.value, reset=args.reset.here)
-        elif args.accessibility.here:
-            srv.connect("chrome", reset=args.reset.here)
+
+        if args.accessibility and args.driver.value != "chrome":
+            print("To use accessibility plugin, please use chrome driver.")
+            sys.exit(1)
+        # if args.connect.here:
+        srv.connect(args.driver.value, reset=args.reset.here)
+        # elif args.accessibility.here:
+            # print("Here")
+            # sys.exit()
+            # srv.connect("chrome", reset=args.reset.here)
 
         if args.focus.here:
             srv.browser_focus()
@@ -92,23 +98,31 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
             )
 
             if args.insecure.here:
-                confirmCert=False
-                try:
-                    srv.get_driver().get(url)
-                except BaseException as e:
-                    if e.__class__.__name__ == "InsecureCertificateException":
-                        print("Override certificate Exception")
-                        confirmCert=True
-                    else:
-                        print(traceback.format_exc())
+                if srv.get_driver().dy["name"] == "firefox":
+                    confirmCert=False
+                    try:
+                        srv.get_driver().get(url)
+                    except BaseException as e:
+                        if e.__class__.__name__ == "InsecureCertificateException":
+                            print("Override certificate Exception")
+                            confirmCert=True
+                        else:
+                            print(traceback.format_exc())
 
-                if confirmCert is True:
-                    if srv.get_driver().dy["name"] == "firefox":
+                    if confirmCert is True:
                         srv.get_driver().find_element_by_id("advancedButton").click()
                         srv.get_driver().find_element_by_id("exceptionDialogButton").click()
-                    else:
-                        print("needs to be implemented")
-                        sys.exit()
+                elif srv.get_driver().dy["name"] == "chrome":
+                    srv.get_driver().get(url)
+                    advanced_button=srv.get_driver().get_elem("details-button", error=False, wait_ms=800)
+                    if advanced_button is not None:
+                        advanced_button.click()
+                        srv.get_driver().find_element_by_id("proceed-link").click()
+
+                    # print(advanced_button)
+                else:
+                    print("--insecure flag needs to be implemented for driver '{}'".format(srv.get_driver().dy["name"]))
+                    sys.exit(1)
             else:
                 srv.get_driver().get(url)
 
@@ -125,6 +139,22 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
             if args.focus.here is False:
                 srv.browser_focus()
             pyautogui.hotkey('ctrl', 'shift', 'k')
+
+        if args.accessibility.here:
+            import pyautogui
+            # you have to take a screenshot of the button
+            extn = pyautogui.locateOnScreen(os.path.join(srv.driver_data["direpa_extensions"], "site_improve_button.png"))
+            offset=15
+            if extn is None:
+                print("Not Found button.png")
+                sys.exit(1)
+            pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
+
+        if args.driver_info.here:
+            pprint(srv.get_driver().dy)
+
+        if args.cmd.here:
+            srv.windows.focus(cmd_pid)
            
 
         # if args.clear_cache.here:
@@ -157,21 +187,7 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
         #         alert = Alert(driver)
         #         alert.accept()
 
-        if args.accessibility.here:
-            import pyautogui
-            # you have to take a screenshot of the button
-            extn = pyautogui.locateOnScreen(os.path.join(srv.driver_data["direpa_extensions"], "site_improve_button.png"))
-            offset=15
-            if extn is None:
-                print("Not Found button.png")
-                sys.exit(1)
-            pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
 
-        if args.driver_info.here:
-            pprint(srv.get_driver().dy)
-
-        if args.cmd.here:
-            srv.windows.focus(cmd_pid)
 
    
 
