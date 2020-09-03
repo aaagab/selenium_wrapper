@@ -72,7 +72,7 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
             cmd_pid=srv.windows.get_active()
 
 
-        if args.accessibility and args.driver.value != "chrome":
+        if args.accessibility.here and args.driver.value != "chrome":
             print("To use accessibility plugin, please use chrome driver.")
             sys.exit(1)
         # if args.connect.here:
