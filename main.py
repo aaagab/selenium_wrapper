@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 import shlex
+import time
 import traceback
 
 import pyautogui
@@ -50,6 +51,8 @@ if __name__ == "__main__":
 selenium_wrapper --connect --driver chrome --accessibility --refresh --url https://www.example.com/e/example/login
 selenium_wrapper --connect --driver firefox --url departments --path-project A:\wrk\e\example\1\src --params "{'fruit':'apple','region':'greenland'}"
 selenium_wrapper --connect --driver firefox --url departments --hostname https://www.example.com/e/example
+selenium_wrapper --connect --driver firefox --url events/create --select "[{'frmEventDescription': 'mytext'}]" --delay 1000
+selenium_wrapper --connect --driver firefox --url events/create --select 'frmEventDescription' --delay 1000
         """)
         sys.exit(0)
     elif args.gui.here:
@@ -134,6 +137,20 @@ selenium_wrapper --connect --driver firefox --url departments --hostname https:/
 
         if args.scroll.here:
             srv.get_driver().scroll(percent=args.scroll.value, wait_ms=args.delay.value)
+
+        if args.select.here:
+            if args.delay.value is not None:
+                time.sleep(float(args.delay.value)/1000)
+
+            if isinstance(args.select.value, str):
+                elem=srv.get_elem(args.select.value)
+                elem.send_keys("")
+            elif isinstance(args.select.value, list):
+                for dy in args.select.value:
+                    if isinstance(dy, dict):
+                        key=next(iter(dy))
+                        elem=srv.get_elem(key)
+                        elem.send_keys(dy[key])
 
         if args.console.here:
             if args.focus.here is False:

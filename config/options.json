@@ -12,7 +12,7 @@
     },
     "connect": {
         "aliases": "--connect,--conn,-c",
-        "args": "cmd,console,driver,url,focus,page,refresh,scroll",
+        "args": "cmd,console,driver,url,focus,page,refresh,scroll,select",
         "info": "Launch a selected driver on top of the grid",
         "required": "driver"
     },
@@ -79,6 +79,13 @@
         "type": "json",
         "values": "KEYS_VALUES"
     },
+    "select": {
+        "args": "delay",
+        "info": "Select element by id",
+        "nested": true,
+        "type": "json",
+        "values": "ELEMENT_ID_VALUE"
+    },
     "reset": {
         "args": "drivers",
         "info": "Reset Selenium Server"
@@ -101,7 +108,7 @@
     },
     "url": {
         "info": "set browser url",
-        "args": "url_alias,hostname,params,insecure",
+        "args": "url_alias,hostname,params,insecure,select",
         "nested": true,
         "values": "URL"
     },
