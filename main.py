@@ -173,6 +173,7 @@ selenium_wrapper --connect --driver firefox --url events/create --select 'frmEve
             if extn is None:
                 print("Not Found button.png")
                 sys.exit(1)
+            time.sleep(.5)
             pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
 
         if args.driver_info.here:
