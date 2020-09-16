@@ -10,9 +10,16 @@
     "clear_cache": {
         "show": false
     },
+    "click": {
+        "args": "delay",
+        "info": "select element by id and perform click",
+        "nested": true,
+        "type": "json",
+        "values": "ELEMENT_ID"
+    },
     "connect": {
         "aliases": "--connect,--conn,-c",
-        "args": "cmd,console,driver,url,focus,page,refresh,scroll,select",
+        "args": "click,cmd,console,driver,url,focus,page,refresh,scroll,select",
         "info": "Launch a selected driver on top of the grid",
         "required": "driver"
     },

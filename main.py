@@ -152,6 +152,14 @@ selenium_wrapper --connect --driver firefox --url events/create --select 'frmEve
                         elem=srv.get_elem(key)
                         elem.send_keys(dy[key])
 
+        if args.click.here:
+            if args.delay.value is not None:
+                time.sleep(float(args.delay.value)/1000)
+
+            elem=srv.get_driver().get_elem(args.click.value)
+            elem.send_keys("")
+            elem.click()
+
         if args.console.here:
             if args.focus.here is False:
                 srv.browser_focus()
