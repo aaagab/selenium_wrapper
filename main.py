@@ -26,7 +26,7 @@ if __name__ == "__main__":
     pkg=importlib.import_module(module_name)
     del sys.path[0]
 
-    args, dy_app=pkg.Options(filenpa_app="gpm.json", filenpa_args="config/options.json", allow_empty=True).get_argsns_dy_app()
+    args, dy_app=pkg.Options(filenpa_app="gpm.json", filenpa_args="config/options.json", allow_empty=True, cli_expand=True).get_argsns_dy_app()
 
     debug=args.debug.here
     direpa_media="Y:\\bin\\selenium_media"
