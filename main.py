@@ -151,6 +151,9 @@ selenium_wrapper --connect --driver firefox --url events/create --select 'frmEve
                         key=next(iter(dy))
                         elem=srv.get_elem(key)
                         elem.send_keys(dy[key])
+                    elif isinstance(dy, str):
+                        elem=srv.get_elem(dy)
+                        elem.send_keys("")
 
         if args.click.here:
             if args.delay.value is not None:
