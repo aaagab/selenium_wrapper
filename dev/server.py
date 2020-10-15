@@ -15,10 +15,6 @@ from ..gpkgs import shell_helpers as shell
 from ..gpkgs import message as msg
 from ..gpkgs.timeout import TimeOut
 
-r"""
-"C:\Users\john\Desktop\data\bin\selenium\selenium_server.py"
-"""
-
 from .windows import Windows
 
 class SeleniumServer():
