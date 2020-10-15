@@ -13,8 +13,6 @@ import pyautogui
 
 # pip3 install pyautogui
 
-# mklink /H "C:\Users\john\Desktop\data\bin\selenium.py" "C:\Users\john\Desktop\data\bin\selenium\main.py"
-
 if __name__ == "__main__":
     import sys, os
 
