@@ -27,7 +27,7 @@ if __name__ == "__main__":
     args, dy_app=pkg.Options(filenpa_app="gpm.json", filenpa_args="config/options.json", allow_empty=True, cli_expand=True).get_argsns_dy_app()
 
     debug=args.debug.here
-    direpa_media="Y:\\bin\\selenium_media"
+    direpa_media=os.path.join(os.path.expanduser("~"), "fty", "etc", "selenium_media")
 
     if args.selenium_options.here:
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
