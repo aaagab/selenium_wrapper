@@ -3,9 +3,10 @@
         "Gabriel Auger"
     ],
     "deps": [
+        "f093c509-18ac-4feb-8412-f556ec2e838d|geturl|0.2.0|gpm",
         "cf09346e-b436-4259-b6dd-e56516b508a5|message|6.2.0|gpm",
-        "ca72f0a9-8a9b-4ff6-a013-e5d0974cb1e5|options|8.0.1|gpm",
-        "df328dbe-54ab-4a6d-b7a2-932b0eaee30a|shell_helpers|5.1.0|gpm",
+        "ca72f0a9-8a9b-4ff6-a013-e5d0974cb1e5|options|8.5.0|gpm",
+        "df328dbe-54ab-4a6d-b7a2-932b0eaee30a|shell_helpers|5.3.1|gpm",
         "01f987df-3241-4c49-9fec-049aa0a8701c|timeout|3.0.0|gpm"
     ],
     "description": "selenium python wrapper for browser automation",
@@ -17,5 +18,5 @@
     ],
     "name": "selenium_wrapper",
     "uuid4": "8af5aa64-70d1-4992-a53c-e9dcde67fc1f",
-    "version": "4.4.0"
+    "version": "5.0.0"
 }

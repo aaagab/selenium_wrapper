@@ -15,10 +15,6 @@ from ..gpkgs import shell_helpers as shell
 from ..gpkgs import message as msg
 from ..gpkgs.timeout import TimeOut
 
-r"""
-"C:\Users\john\Desktop\data\bin\selenium\selenium_server.py"
-"""
-
 from .windows import Windows
 
 class SeleniumServer():
@@ -50,6 +46,7 @@ class SeleniumServer():
         self.set_drivers_data(accessibility)
         self.processes.init()
         self.windows=Windows(debug=self.debug)
+
 
     def set_sessions(self):
         sessions=self.get_sessions()
@@ -207,6 +204,8 @@ class SeleniumServer():
         
     def set_drivers_data(self, accessibility):
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+        from selenium import webdriver 
+
         self.drivers_data=dict()
         self.driver_names=[
             "chrome",
@@ -280,13 +279,25 @@ class SeleniumServer():
             driver["capabilities"]=getattr(DesiredCapabilities, capability_name)
 
             if name == "chrome" and accessibility is True:
-                from selenium import webdriver 
                 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
                 chrome_options=ChromeOptions()
                 chrome_options.add_extension(os.path.join(driver["direpa_extensions"], "site_improve_126_0.crx"))
                 driver["capabilities"]=chrome_options.to_capabilities()
-               
+            elif name == "iexplorer":
+                # solve issue:  Protected Mode settings are not the same for all zones.
+                options = webdriver.IeOptions()
+                options.ignore_protected_mode_settings = True
+                driver["capabilities"]=options.to_capabilities()
+            # elif name == "firefox":
+            #     print("sdfsdfsdfsd")
+            #     options = webdriver.FirefoxOptions()
+            #     options.log.level = "trace"
+            #     options.add_argument("-devtools")
+            #     if 'headless' in os.environ and os.environ['headless'] == '1':
+            #         options.headless = True
+            #     driver["capabilities"]=options.to_capabilities()
+                
 
     def create_driver_session(self, session_id):
         from selenium import webdriver
@@ -327,13 +338,12 @@ class SeleniumServer():
         # can you check if a windows exists for a pid.
         root_browsers=[]
         for browser in browsers:
-            # print(browser)
-            if browser["node"].parent.dy["name"] != driver_data["filen_browser"]:
+            if browser["node"].parent is None or (browser["node"].parent.dy["name"] != driver_data["filen_browser"]):
                 root_browsers.append(browser)
                 if self.debug is True:
                     self.processes.report(browser["pid"], show=True, from_root=True, opts=["name", "pid"])
                     print()
-        
+
         return root_browsers
 
     # def is_selenium_browser(self, ):
@@ -345,11 +355,14 @@ class SeleniumServer():
             if driver_data["name"] == "edge":
                 selenium_browsers.append(browser)
             elif driver_data["name"] == "firefox":
-                # pprint(browser)
                 if len(browser["node"].nodes) == 1:
                     child=browser["node"].nodes[0]
                     if len(child.nodes) > 0:
                         selenium_browsers.append(browser)
+                else:
+                    if len(browser["netstat"]) > 0:
+                        if browser["netstat"][0]["state"] == "LISTENING":
+                            selenium_browsers.append(browser)
             else:
                 parent_first=browser["node"].parent
                 if parent_first.dy["name"] in [driver_data["filen_exe"], "unknown"]: # selenium browser
@@ -360,6 +373,7 @@ class SeleniumServer():
     def close_driver_browsers(self, driver_data):
         if self.debug is True:
             print("Close Selenium Browsers '{}'".format(driver_data["filen_browser"]))
+        
         for browser in self.get_selenium_browsers(driver_data):
             pid=None
             if driver_data["name"] == "firefox":
@@ -465,8 +479,19 @@ class SeleniumServer():
             # print(browsers[0]["node"].nodes)
         elif driver_data["name"] == "iexplorer":
             for browser in browsers:
+                print(browser, self.driver_data["browser_session"])
                 if browser["ppid"] == self.driver_data["browser_session"]["pid"]:
                     return browser
+
+            hasBeenKilled=False
+            for browser in browsers:
+                hasBeenKilled=True
+                self.processes.kill(browser["pid"])
+
+            if hasBeenKilled is True:
+                msg.error("Stalled browser for '{}' has been killed please relaunch command".format(driver_data["name"]), exit=1)
+            else:
+                msg.error("No Suitable existing browser has been found for '{}'. Try reset".format(driver_data["name"]), exit=1)
         elif driver_data["name"] in ["firefox", "chrome"]:
             return self.processes.from_pid(self.driver_data["browser_session"]["pid"])
         # elif driver_data["name"] == "chrome":
@@ -508,7 +533,7 @@ class SeleniumServer():
                     msg.error("element not found '{}'".format(id))
                     sys.exit(1)
                 else:
-                    return False
+                    return None
             try:
                 elem=self.get_driver().find_element_by_id(id)
                 break
@@ -517,8 +542,12 @@ class SeleniumServer():
                     continue
         return elem
 
-    def scroll(self, percent=None):
+    def scroll(self, percent=None, wait_ms=None):
         from selenium.webdriver.common.keys import Keys
+  
+        if wait_ms is not None:
+            time.sleep(float(wait_ms)/1000)
+  
         if percent is None:
             percent=100
         else:
@@ -529,6 +558,8 @@ class SeleniumServer():
             print("scroll page height: {}".format(scroll_height))
         if percent < 100:
             scroll_height=int(scroll_height*((percent/100)))
+
+  
 
         self.get_driver().execute_script("window.scrollTo(0,{})".format(scroll_height))
         # self.get_driver().find_element_by_css_selector("body").send_keys(Keys.CONTROL, Keys.END)

@@ -59,50 +59,91 @@ class Processes():
     def init(self):
         self.procs_by_name=dict()
         self.procs_by_pid=dict()
-        # self.netstat_pids=dict()
-        # self.set_tcp_connections()
+        self.netstat_pids=dict()
+        self.set_tcp_connections()
+
+        # pprint(self.netstat_pids)
         self.set_processes()
+
         # sys.exit()
 
-    # def set_tcp_connections(self):
-    #     for line in shell.cmd_get_value("netstat -aon").splitlines():
-    #         # Proto  Local Address          Foreign Address        State           PID
-    #         #  TCP    0.0.0.0:22             0.0.0.0:0              LISTENING       4664
-    #         #   UDP    0.0.0.0:123            *:*                                    1484
-    #         # reg_line=re.match(r"^\s+TCP\s+127.0.0.1:([0-9]+)\s+[0-9]+.[0-9]+.[0-9]+.[0-9]+:([0-9]+)\s+([A-Z]+)\s+([0-9]+)$", line)
-    #         line=line.strip()
-    #         if line:
-    #             fields=re.sub(r"\s+", r" ", line).split()
-    #             if len(fields) > 3:
-    #                 if fields[0] != "Proto":
-    #                     if len(fields) == 5:
-    #                         proto, ip_port_local, ip_port_foreign, state, pid = fields
-    #                     elif len(fields) == 4:
-    #                         proto, ip_port_local, ip_port_foreign, pid = fields
-    #                         state=None
+    def set_tcp_connections(self):
+        for line in shell.cmd_get_value("netstat -aon").splitlines():
+            # Proto  Local Address          Foreign Address        State           PID
+            #  TCP    0.0.0.0:22             0.0.0.0:0              LISTENING       4664
+            #   UDP    0.0.0.0:123            *:*                                    1484
+            # reg_line=re.match(r"^\s+TCP\s+127.0.0.1:([0-9]+)\s+[0-9]+.[0-9]+.[0-9]+.[0-9]+:([0-9]+)\s+([A-Z]+)\s+([0-9]+)$", line)
+            line=line.strip()
+            if line:
+                fields=re.sub(r"\s+", r" ", line).split()
+                if len(fields) > 3:
+                    if fields[0] != "Proto":
+                        if len(fields) == 5:
+                            proto, ip_port_local, ip_port_foreign, state, pid = fields
+                        elif len(fields) == 4:
+                            proto, ip_port_local, ip_port_foreign, pid = fields
+                            state=None
 
-    #                     reg_ip_port_local=re.match(r"^(.+):([0-9]+)$", ip_port_local)
-    #                     ip_local=reg_ip_port_local.group(1)
-    #                     port_local=reg_ip_port_local.group(2)
-    #                     reg_ip_port_foreign=re.match(r"^(.+):(.+)$", ip_port_foreign)
-    #                     ip_foreign=reg_ip_port_foreign.group(1)
-    #                     port_foreign=reg_ip_port_foreign.group(2)
+                        reg_ip_port_local=re.match(r"^(.+):([0-9]+)$", ip_port_local)
+                        ip_local=reg_ip_port_local.group(1)
+                        port_local=reg_ip_port_local.group(2)
+                        reg_ip_port_foreign=re.match(r"^(.+):(.+)$", ip_port_foreign)
+                        ip_foreign=reg_ip_port_foreign.group(1)
+                        port_foreign=reg_ip_port_foreign.group(2)
 
-    #                     if not pid in self.netstat_pids:
-    #                         self.netstat_pids[pid]=[]
+                        if not pid in self.netstat_pids:
+                            self.netstat_pids[pid]=[]
 
-    #                     self.netstat_pids[pid].append(dict(
-    #                         ip_foreign=ip_foreign,
-    #                         ip_local=ip_local,
-    #                         ip_port_foreign=ip_port_foreign,
-    #                         ip_port_local=ip_port_local,
-    #                         pid=pid,
-    #                         port_foreign=port_foreign,
-    #                         port_local=port_local,
-    #                         proto=proto,
-    #                         state=state,
-    #                     ))
+                        self.netstat_pids[pid].append(dict(
+                            ip_foreign=ip_foreign,
+                            ip_local=ip_local,
+                            ip_port_foreign=ip_port_foreign,
+                            ip_port_local=ip_port_local,
+                            pid=pid,
+                            port_foreign=port_foreign,
+                            port_local=port_local,
+                            proto=proto,
+                            state=state,
+                        ))
 
+    # def get_parent_pids(self, procs_by_pid, pnode=None):
+    #     # pprint(dy_nodes)
+    #     # go through all nodes,
+    #     # if ppid not found or pid == ppid then create a node parent
+    #     else 
+    #     create a node and for parent get ppid node 
+    #     so go for ppid node i
+    #     pass
+    #     for pid, proc in procs_by_pid.items():
+    #         if (pid == proc["ppid"]):
+    #             procs_by_pid[pid]["node"]=Node(dy=proc)
+    #         else:
+    #             if proc["ppid"] in procs_by_pid:
+    #                 pass
+    #                 print("found")
+    #             else:
+    #                 print("not found")
+
+                # if(pid, proc["ppid"])
+
+    def get_parent_pids(self, pid, level=0, parents=[]):
+        if pid not in parents:
+            if pid in self.procs_by_pid:
+                # input("{}{}".format(" "*level,pid))
+                parents.append(pid)
+                proc=self.procs_by_pid[pid]
+                if pid == proc["ppid"]:
+                    pass
+                else:
+                    self.get_parent_pids(proc["ppid"], level+1, parents)
+        else:
+            # print("stopped recursion")
+            pass
+
+        if level == 0:
+            return parents
+
+    
 
     def set_processes(self):   
         header=True
@@ -123,46 +164,26 @@ class Processes():
                 )
                 self.procs_by_pid[pid]=proc
 
-        while True:
-            unknown=False
-            all_checked=True
-            for pid, proc in self.procs_by_pid.items():
-                if not "node" in proc:
-                    all_checked=False
-                    if proc["ppid"] in self.procs_by_pid:
-                        pproc=self.procs_by_pid[proc["ppid"]]
-                        if not "node" in pproc:
-                            if proc["pid"] == proc["ppid"]:
-                                proc["node"]=Node(dy=proc)
-                                # proc["node"]=Node(dy=proc, netstat_pids=self.netstat_pids)
-                        else:
-                            proc["node"]=Node(dy=proc, parent=pproc["node"])
-                            # proc["node"]=Node(dy=proc, parent=pproc["node"], netstat_pids=self.netstat_pids)
-                    else:
-                        dy=dict(
-                            name="unknown",
-                            pid=proc["ppid"],
-                            ppid=proc["ppid"],
-                        )
-                        self.procs_by_pid[proc["ppid"]]=dy;
-                        self.procs_by_pid[proc["ppid"]]["node"]=Node(dy=dy)
-                        # self.procs_by_pid[proc["ppid"]]["node"]=Node(dy=dy, netstat_pids=self.netstat_pids)
-                        pproc=self.procs_by_pid[proc["ppid"]]
-                        proc["node"]=Node(parent=pproc["node"], dy=proc)
-                        # proc["node"]=Node(parent=pproc["node"], dy=proc, netstat_pids=self.netstat_pids)
-                        unknown=True
-                        break
-
-            if unknown is False:
-                if all_checked is True:
-                    break
-                
-                
-
         for pid, proc in self.procs_by_pid.items():
-            if not proc["name"] in self.procs_by_name:
-                self.procs_by_name[proc["name"]]=[]
-            self.procs_by_name[proc["name"]].append(proc)
+            if not "node" in proc:
+                tmp_pids=[p for p in reversed(self.get_parent_pids(pid, parents=[]))]
+                for t, tmp_pid in enumerate(tmp_pids):
+                    tmp_proc=self.procs_by_pid[tmp_pid]
+                    if not "node" in tmp_proc:
+                        parent_node=None
+                        if t > 0:
+                            parent_node=self.procs_by_pid[tmp_pids[t-1]]["node"]
+
+                        if tmp_proc["pid"] in self.netstat_pids:
+                            tmp_proc["netstat"]=self.netstat_pids[tmp_proc["pid"]]
+                        else:
+                            tmp_proc["netstat"]=[]
+
+                        tmp_proc["node"]=Node(dy=tmp_proc, parent=parent_node)
+
+                        if not tmp_proc["name"] in self.procs_by_name:
+                            self.procs_by_name[tmp_proc["name"]]=[]
+                        self.procs_by_name[tmp_proc["name"]].append(tmp_proc)
 
         # browsers=self.from_name("iexplore.exe")
         # pprint(browsers)
@@ -226,6 +247,8 @@ class Processes():
             if stderr:
                 print(stderr.decode())
 
+    # example:
+    # self.processes.report(netstat["pid"], show=True, from_root=True, opts=["name", "pid"])
     def report(self,
         pid,                    # user
         depth=None,             # user
@@ -246,7 +269,7 @@ class Processes():
             "ppid",
             "name",
             "node",
-            # "netstat",
+            "netstat",
         ]
 
         if "all" in opts:
@@ -319,8 +342,8 @@ class Processes():
                                 space+=prefix
                         if opt == "pid":
                             field="{:<6}".format(value)
-                        # elif opt == "netstat":
-                            # pass # print after
+                        elif opt == "netstat":
+                            pass # print after
                         else:
                             field=value
                         show_fields+=space+str(field)
@@ -344,8 +367,8 @@ class Processes():
             if show is True:
                 if show_fields:
                     print(show_fields)
-                    # if "netstat" in opts:
-                        # print(''.join([ prefix+ "  " + l for l in pformat(pnode.dy["netstat"]).splitlines(True)]))
+                    if "netstat" in opts:
+                        print(''.join([ prefix+ "  " + l for l in pformat(pnode.dy["netstat"]).splitlines(True)]))
 
         recurse=False
         if depth is None:
