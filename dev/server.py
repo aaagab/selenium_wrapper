@@ -4,6 +4,7 @@ from pprint import pprint
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -34,6 +35,7 @@ class SeleniumServer():
         self.direpa_media=direpa_media
         self.direpa_drivers=os.path.join(self.direpa_media, "drivers")
         self.filenpa_java=r"C:\Program Files\Java\jre1.8.0_251\bin\java"
+        self.filenpa_java=r"C:\Program Files (x86)\Common Files\Oracle\Java\javapath\java.exe"
         self.host="127.0.0.1"
         self.port="4444"
         self.grid_url = "http://127.0.0.1:{}/wd/hub".format(self.port)
@@ -456,6 +458,7 @@ class SeleniumServer():
                 cmd_str+=prefix+arg
             if self.debug is True:
                 print(cmd_str)
+
             pid=subprocess.Popen(cmd, creationflags=DETACHED_PROCESS).pid
             status="started"
         else:
@@ -479,7 +482,7 @@ class SeleniumServer():
             # print(browsers[0]["node"].nodes)
         elif driver_data["name"] == "iexplorer":
             for browser in browsers:
-                print(browser, self.driver_data["browser_session"])
+                # print(browser, self.driver_data["browser_session"])
                 if browser["ppid"] == self.driver_data["browser_session"]["pid"]:
                     return browser
 
