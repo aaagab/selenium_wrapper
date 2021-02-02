@@ -106,7 +106,7 @@ class SeleniumServer():
                 self.host,
             ]
 
-            print(" ".join(cmd))
+            # print(" ".join(cmd))
 
             DETACHED_PROCESS = 0x00000008
             cmd_str=""
