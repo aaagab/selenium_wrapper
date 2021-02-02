@@ -88,6 +88,7 @@ class SeleniumServer():
                 self.grid_url_pid=None
 
         status=None
+
         if self.get_grid_url_pid() is None:
             driver_args=[]
             for args in [ driver["dwebdriver_args"] for name, driver in self.drivers_data.items()]:
@@ -133,6 +134,7 @@ class SeleniumServer():
             ))
 
         self.driver=self.get_driver()
+
 
     def close_driver_processes(self,
         driver_filen_browser,
@@ -193,7 +195,7 @@ class SeleniumServer():
                     session_id=session["id"],
                 )
 
-                pprint(self.driver_data["browser_session"])                    
+                # pprint(self.driver_data["browser_session"])                    
 
             setattr(self.driver, "dy", self.driver_data)
             setattr(self.driver, "scroll", self.scroll)
