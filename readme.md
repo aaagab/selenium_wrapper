@@ -97,11 +97,42 @@ C:\Program Files (x86)\Common Files\Oracle\Java\javapath\java.exe -Dwebdriver.ge
 # go to hub and get moz:processID 
 http://127.0.0.1:4444/wd/hub/sessions
 # get port from pid
-netstat -aon -p tcp | findstr "10728"
+netstat -aon -p tcp | findstr "17888"
 # curl browser with get
-49158
+curl -sSL http://127.0.0.1:49888/status
 # then try a post to change url
+# curl --header "Content-Type: application/json" --request POST --data "{\"url\": \"https://github.com\"}" http://127.0.0.1:49888/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/url
+echo  | curl -d @- 
+https://hexdocs.pm/webdriver/WebDriver.Session.html
+window.open("https://www.example.com", "_blank"); 
 
+POST 	/session/{session id}/execute/async
+
+curl -d "{\"url\": \"https://github.com\"}" -H "Content-Type: application/json" -X POST http://127.0.0.1:44444/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/url
+
+curl -d '{window.open\"https://www.example.com\", \"_blank\")' -H "Content-Type: application/json" -X POST http://127.0.0.1:49888/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/execute/async
+
+
+curl http://localhost:49888/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/url -d '{"url":"http://example.com/"}'
+curl http://localhost:44444/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/url -d '{"url":"http://example.com/"}'
+
+curl -d "[0,8,\"WebDriver:Navigate\",{\"url\":\"https://google.com\"}]" -H "Content-Type: application/json" -X POST http://127.0.0.1:49888/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/url
+curl -d "[0,8,\"WebDriver:Navigate\",{\"url\":\"https://google.com\"}]" -H "Content-Type: application/json" -X POST http://127.0.0.1:49888/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/url
+
+curl -X POST -H "Content-Type: text/plain" --data "this is raw data" http://127.0.0.1:49888/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/url
+
+curl -d "{\"script\": \"window.open('https://github.com')\"}" -H "Content-Type: application/json" -X POST http://127.0.0.1:49888/session/3f44419b-dee1-4a68-8eca-27ee6be29c3e/execute/async
+
+
+# window.open("https://www.example.com", "_blank")
+# window.open("https://www.example.com", "_blank"); 
+webdriver API
+https://chromium.googlesource.com/chromium/src/+/master/docs/chromedriver_status.md
+https://hexdocs.pm/webdriver/WebDriver.Session.html
+
+how to send a raw curl javascript to webdriver
+
+https://makandracards.com/makandra/49096-how-to-control-chromedriver-using-curl
 ```
 
 Typical Debug:  
