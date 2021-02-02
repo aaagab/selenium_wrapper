@@ -13,8 +13,10 @@ fix:
 so I went back to version 82.0.1 with driver geckodriver-v0.26.0-win64 and it starts working again.  
 https://ftp.mozilla.org/pub/firefox/releases/82.0.1/win64/en-US/  
 
-I didn't find a way to disable Google Update, why would that be an easy task?
-
+I didn't find a way to disable Firefox Update, why would that be an easy task?  
+The bug may be that:  
+https://bugzilla.mozilla.org/show_bug.cgi?id=1676671  
+created a ticket on github https://github.com/mozilla/geckodriver/issues/1837  
 
 ## Install Edge Driver
 Open elevated prompt and:
@@ -42,4 +44,96 @@ With elevated prompt do:
 ```shell
 > CheckNetIsolation LoopbackExempt -a -n="Microsoft.MicrosoftEdge_8wekyb3d8bbwe
 OK.
+```
+
+## Debug Firefox Gecko Driver
+selenium.common.exceptions.WebDriverException: Message: NotFoundError: WindowGlobalParent.getActor: No such JSWindowActor 'MarionetteCommands'issue:  
+### How to manually check what browser is needed for the session?  
+```shell
+# So get all pid for firefox.exe:  
+# use task manager just look at firefox pid
+tasklist  | findstr firefox.exe
+
+# go to page and get pid from json "moz:processID": 18776,
+http://127.0.0.1:4444/wd/hub/sessions
+# Then for each pid get the netstat port:  
+netstat -aon -p tcp | findstr "18776"
+# Then try curl on ports
+>  curl -sSL http://127.0.0.1:2344/status
+curl: (7) Failed to connect to 127.0.0.1 port 2344: Connection refused
+>  curl -sSL http://127.0.0.1:54130/status
+curl: (7) Failed to connect to 127.0.0.1 port 54130: Connection refused
+>  curl -sSL http://127.0.0.1:54129/status
+50:{"applicationType":"gecko","marionetteProtocol":3}
+
+# How to send url to session with curl?
+I don't know but lets just find where the browser pid is defined and lets just try to change it if possible
+I found that with firefox logs:
+POST /session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4/url {"url": "https://www.example.com/e/example/login"}
+curl --data "param1=value1&param2=value2" https://example.com/resource.cgi
+
+http://127.0.0.1:4444/wd/hub/sessions/session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4/url
+
+curl -sSL http://127.0.0.1:58503/session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4
+
+
+http://127.0.0.1:4444/session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4
+
+echo '{"text": "Hello **world**!"}' | curl -d @- https://api.github.com/markdown
+echo '{"url": "https://www.example.com/e/example/login"}' | curl -d @- http://127.0.0.1:58503/session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4/url
+
+
+echo '{"url": "https://www.example.com/e/example/login"}' | curl -d @- http://127.0.0.1:58503/session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4/url
+
+curl --header "Content-Type: application/json" --request POST --data '{"url": "https://www.example.com/e/example/login"}' http://127.0.0.1:58503/session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4/url
+
+curl --header "Content-Type: application/json" --request POST --data "{\"url\": \"https://www.example.com/e/example/login\"}" http://127.0.0.1:59544/session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4/url
+
+tail -f /mnt/c/Users/john/fty/etc/selenium_media/logs/client_firefox.txt
+
+```
+
+Typical Debug:  
+- At Selenium Class Init get all drivers
+- At Selenium().connect
+  - get driver
+  - get grid url pid self.get_grid_url_pid()
+    - if reset is True and pid exists then it is killed.
+    - Then selenium.jar is launched with the related webdriver executable and logs set on localhost 
+    - and driver is set
+- get session or create session
+- get browser window
+- launch driver
+
+
+
+### Additional Info
+```shell
+# grid_url = "http://127.0.0.1:4444/wd/hub"
+# driver_firefox = webdriver.Remote(grid_url, DesiredCapabilities.FIREFOX)
+# driver_chrome = webdriver.Remote(grid_url, DesiredCapabilities.CHROME)
+
+
+# > tasklist | findstr geckodriver
+# geckodriver.exe              22464 RDP-Tcp#83                 2     11,324 K
+
+# > tasklist | findstr chromedriver
+# chromedriver.exe              9148 RDP-Tcp#83                 2     14,896 K
+```
+
+```json
+// # disable firefox updates
+// # There is an alternative solution suggested by our reader EP. You can create a policies.json file and store that file into the ‘C:\Program Files\Mozilla Firefox\distribution’ folder. Create a ‘distribution’ folder in \Program Files\Mozilla Firefox\ folder and place that policies.json file into that folder with the following contents:
+{
+"policies": 
+   {
+     "DisableAppUpdate": true
+    }
+}
+// To confirm, you can go to the URL about:policies and check if there's an entry like this
+// I also deleted files updaters and maintenance
+    // update-settings.ini,
+    // updater.ini,
+    // updater.exe (updater in Linux).
+
 ```
