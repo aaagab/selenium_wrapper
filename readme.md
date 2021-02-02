@@ -67,8 +67,8 @@ curl: (7) Failed to connect to 127.0.0.1 port 54130: Connection refused
 50:{"applicationType":"gecko","marionetteProtocol":3}
 
 # How to send url to session with curl?
-I don't know but lets just find where the browser pid is defined and lets just try to change it if possible
-I found that with firefox logs:
+# I don't know but lets just find where the browser pid is defined and lets just try to change it if possible
+# I found that with firefox logs:
 POST /session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4/url {"url": "https://www.example.com/e/example/login"}
 curl --data "param1=value1&param2=value2" https://example.com/resource.cgi
 
@@ -90,6 +90,17 @@ curl --header "Content-Type: application/json" --request POST --data '{"url": "h
 curl --header "Content-Type: application/json" --request POST --data "{\"url\": \"https://www.example.com/e/example/login\"}" http://127.0.0.1:59544/session/ca02d309-33f9-4767-89a6-3d20c5f9e8e4/url
 
 tail -f /mnt/c/Users/john/fty/etc/selenium_media/logs/client_firefox.txt
+
+# launch hub with this command
+C:\Program Files (x86)\Common Files\Oracle\Java\javapath\java.exe -Dwebdriver.gecko.driver=%userprofile%\fty\etc\selenium_media\drivers\geckodriver.exe -Dwebdriver.firefox.logfile=%userprofile%\fty\etc\selenium_media\logs\client_firefox.txt -Dwebdriver.firefox.loglevel=DEBUG -jar %userprofile%\fty\etc\selenium_media\selenium-server-standalone-3.141.59.jar -log %userprofile%\fty\etc\selenium_media\logs\server.txt -timeout 252000 -host 127.0.0.1
+
+# go to hub and get moz:processID 
+http://127.0.0.1:4444/wd/hub/sessions
+# get port from pid
+netstat -aon -p tcp | findstr "10728"
+# curl browser with get
+49158
+# then try a post to change url
 
 ```
 
