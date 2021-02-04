@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 from pprint import pprint
 import os
+import sys
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
 def get_driver_data(driver_names, drivers_data, name):
     if name not in driver_names:
@@ -96,14 +98,24 @@ def get_drivers_data(
             driver["capabilities"]=options.to_capabilities()
         elif name == "firefox":
             options = webdriver.FirefoxOptions()
+            fp = webdriver.FirefoxProfile()
+            fp.set_preference("marionette.actors.enabled", False)
+            options.profile=fp
+            # options.binary= FirefoxBinary(r'C:\Program Files (x86)\Mozilla Firefox\Firefox.exe')
             options.set_capability("marionette", True)
-            # options.headless = True
             options.log.level = "trace"
             options.add_argument("-devtools")
             driver["capabilities"]=options.to_capabilities()
-        #     if 'headless' in os.environ and os.environ['headless'] == '1':
-        #         options.headless = True
-        #     driver["capabilities"]=options.to_capabilities()
+            # options.headless = True
+            #     if 'headless' in os.environ and os.environ['headless'] == '1':
+            #         options.headless = True
+            #     driver["capabilities"]=options.to_capabilities()
+
+            # fp.set_preference("browser.download.folderList", 2) # 0 means to download to the desktop, 1 means to download to the default "Downloads" directory, 2 means to use the directory 
+            # fp.set_preference("browser.helperApps.alwaysAsk.force", False)
+            # fp.set_preference("browser.download.manager.showWhenStarting",False)
+            # fp.set_preference("browser.download.dir", "H:\Downloads") 
+
                 
 
     return drivers_data
