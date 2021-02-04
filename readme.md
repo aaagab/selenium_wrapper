@@ -18,6 +18,19 @@ The bug may be that:
 https://bugzilla.mozilla.org/show_bug.cgi?id=1676671  
 created a ticket on github https://github.com/mozilla/geckodriver/issues/1837  
 
+I was able to correct the issue by adding preferences like:
+```python
+options = webdriver.FirefoxOptions()
+fp = webdriver.FirefoxProfile()
+# the line below fixed the issue
+fp.set_preference("marionette.actors.enabled", False)
+options.profile=fp
+options.set_capability("marionette", True)
+options.log.level = "trace"
+options.add_argument("-devtools")
+driver["capabilities"]=options.to_capabilities()
+```
+
 ## Install Edge Driver
 Open elevated prompt and:
 ```shell
@@ -37,7 +50,6 @@ The operation completed successfully.
 # it installs that file
 c:\Windows\SysWOW64\MicrosoftWebDriver.exe
 ```
-
 Then error:
 Hmmm...can’t reach this page with edge for local iis server
 With elevated prompt do:
