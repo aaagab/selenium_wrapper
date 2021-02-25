@@ -4,6 +4,7 @@ import os
 import sys
 
 from selenium import webdriver
+from msedge.selenium_tools import EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
@@ -22,6 +23,7 @@ def get_drivers_data(
     direpa_logs=None,
     driver_names=[], 
 ):
+
 
     drivers_data=dict()
     for name in driver_names:
@@ -52,12 +54,22 @@ def get_drivers_data(
             filen_browser="chrome.exe"
             filen_exe="chromedriver.exe"
             session_proc_name=filen_browser
+        # elif name == "msedge":
+        #     browser_name="msedge"
+        #     filen_browser="msedge.exe"
+        #     capability_name="EDGE"
+        #     session_proc_name="Msedge"
+        #     filen_exe="msedgedriver.exe"
         elif name == "edge":
-            browser_name="MicrosoftEdge"
-            filen_browser="MicrosoftEdge.exe"
-            session_proc_name="System"
-            filen_exe="MicrosoftWebDriver.bat"
-            driver_proc_name=filen_exe.replace(".bat", ".exe")
+            # browser_name="MicrosoftEdge"
+            # session_proc_name="System"
+            # filen_exe="MicrosoftWebDriver.bat"
+            # driver_proc_name=filen_exe.replace(".bat", ".exe")
+            browser_name="msedge"
+            filen_browser="msedge.exe"
+            capability_name="EDGE"
+            session_proc_name="Msedge"
+            filen_exe="msedgedriver.exe"
 
         if log_label is None:
             log_label=driver_label
@@ -85,6 +97,9 @@ def get_drivers_data(
             filenpa_exe=driver["filenpa_exe"],
             filenpa_log=driver["filenpa_log"],    
         ).splitlines()
+
+        # pprint(vars(DesiredCapabilities))
+        # sys.exit()
         driver["capabilities"]=getattr(DesiredCapabilities, capability_name)
 
         if name == "chrome" and accessibility is True:
@@ -95,13 +110,18 @@ def get_drivers_data(
             # solve issue:  Protected Mode settings are not the same for all zones.
             options = webdriver.IeOptions()
             options.ignore_protected_mode_settings = True
+            # options.set_capability("marionette", True)
+
             driver["capabilities"]=options.to_capabilities()
         elif name == "firefox":
             options = webdriver.FirefoxOptions()
             fp = webdriver.FirefoxProfile()
-            fp.set_preference("marionette.actors.enabled", False)
+            fp.set_preference("marionette.actors.enabled", True)
             options.profile=fp
             # options.binary= FirefoxBinary(r'C:\Program Files (x86)\Mozilla Firefox\Firefox.exe')
+            # options.binary= FirefoxBinary(r"C:\Users\me\fty\etc\selenium_media\firefox_versions\target\firefox\firefox.exe")
+            # options.binary= FirefoxBinary(r"C:\Users\me\fty\etc\selenium_media\firefox_versions\firefox-81.0\firefox\firefox.exe")
+            # options.binary= FirefoxBinary(r"C:\Users\me\fty\etc\selenium_media\firefox_versions\firefox-82.0\firefox\firefox.exe")
             options.set_capability("marionette", True)
             options.log.level = "trace"
             options.add_argument("-devtools")
@@ -115,9 +135,17 @@ def get_drivers_data(
             # fp.set_preference("browser.helperApps.alwaysAsk.force", False)
             # fp.set_preference("browser.download.manager.showWhenStarting",False)
             # fp.set_preference("browser.download.dir", "H:\Downloads") 
-
+        # elif name == "msedge":
+        elif name == "edge":
+            options = EdgeOptions()
+            options.use_chromium = True
+            driver["capabilities"]=options.to_capabilities()
+            # driver = Edge(options)
+        #     options = webdriver.
+        #     options.ignore_protected_mode_settings = True
+        #     driver["capabilities"]=options.to_capabilities()
                 
-
+            # with profile fp.set_preference("marionette.actors.enabled", False) not crashing working
     return drivers_data
 
 def get_new_driver_session(

@@ -31,6 +31,13 @@ options.add_argument("-devtools")
 driver["capabilities"]=options.to_capabilities()
 ```
 
+I problem come back, let's get rid of curl to check what if browser if from selenium, maybe create a tmp file or something with the process at startup.
+Also one problem maybe that I try to get the curl before the command has been send. so what about I wait for the curl and I get it after?
+ok that is where I have all my pids:
+```python
+for node in self.processes.from_pid(self.get_grid_url_pid())["node"].nodes:
+                print(node.dy)
+```
 ## Install Edge Driver
 Open elevated prompt and:
 ```shell
@@ -191,3 +198,32 @@ Typical Debug:
     // updater.exe (updater in Linux).
 
 ```
+
+If firefox stops working again because of Marion
+
+
+
+
+The latest edge finally installed during an update: Version 88.0.705.74 (Official build) (64-bit)
+```python
+pip3 install msedge-selenium-tools
+
+from msedge.selenium_tools import EdgeOptions
+ elif name == "edge":
+            # browser_name="MicrosoftEdge"
+            # session_proc_name="System"
+            # filen_exe="MicrosoftWebDriver.bat"
+            # driver_proc_name=filen_exe.replace(".bat", ".exe")
+            browser_name="msedge"
+            filen_browser="msedge.exe"
+            capability_name="EDGE"
+            session_proc_name="Msedge"
+            filen_exe="msedgedriver.exe"
+
+     elif name == "edge":
+            options = EdgeOptions()
+            options.use_chromium = True
+            driver["capabilities"]=options.to_capabilities()
+```
+
+for internet explorer make sure you go to options and security tab and for each zone, unchek "enable protected mode" otherwise you are going to have issue in the log file "iexplorer a Protected Mode boundary has been crossed"

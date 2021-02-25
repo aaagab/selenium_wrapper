@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 from ..gpkgs import shell_helpers as shell
+from ..gpkgs import message as msg
 
 def close_sessions(
     debug=False,
@@ -27,10 +28,33 @@ def close_sessions(
             session_id=session["id"],
         )
 
+def get_session(
+    debug=False,
+    driver_data=None,
+    grid_url=None,
+    grid_url_pid=None,
+):
+    sessions=get_sessions(
+        debug=debug,
+        grid_url=grid_url,
+        grid_url_pid=grid_url_pid,
+    )
+
+    for session in sessions:
+        browser_name=session["capabilities"]["browserName"]
+        # print(driver_data["name"] , session)
+        
+        if browser_name == driver_data["browser_name"]:
+            return session
+        # print(browser_name)
+
+    return None
+
 def session_close(
     grid_url=None,
     session_id=None,
 ):
+    print("close the session")
     subprocess.run(shlex.split("curl -sS -X \"DELETE\" {}/session/{}".format(grid_url, session_id)),stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     # you can also see the session from there on the browser, maybe modify it too.
     # http://127.0.0.1:4444/wd/hub/session/a09e521b-bfc7-4d8e-ab20-c50cf74160f9
@@ -68,6 +92,33 @@ def set_sessions(
                             driver_data["session"]=session
                             driver_data["browser_session"]=netstat
                             break
+
+
+def get_browser_pid(
+    browser_proc_name,
+    driver_proc_name,
+    get_grid_url_pid,
+    processes_obj
+):
+    driver_pid=None
+    browser_pid=None
+    for driver_node in processes_obj.from_pid(get_grid_url_pid)["node"].nodes:
+        if driver_node.dy["name"] == driver_proc_name:
+            if driver_pid is None:
+                driver_pid=driver_node.dy["pid"]
+                for browser_node in driver_node.nodes:
+                    if browser_node.dy["name"] == browser_proc_name:
+                        if browser_pid is None:
+                            browser_pid=browser_node.dy["pid"]
+                        else:
+                            msg.error("There are at least two browsers '{}' with driver '{}' please --reset selenium".format(browser_proc_name, driver_proc_name), exit=1)
+            else:
+                msg.error("There are at least two drivers '{}' please --reset selenium".format(driver_proc_name), exit=1)
+
+    if browser_pid is None:
+        msg.error("No pid found for browser '{}'".format(browser_proc_name), exit=1)
+
+    return browser_pid
 
 def get_netstats(
     debug=False,
@@ -124,6 +175,7 @@ def get_sessions(
     if grid_url_pid is not None:
         for session in dy_curl["value"]:
             sessions.append(session)
+
     return sessions
 
 def is_session_driver(
@@ -138,6 +190,7 @@ def is_session_driver(
 
     # port="5999"
     cmd="curl -sSL http://127.0.0.1:{}/session/{}".format(port, session_id)
+    print(cmd)
     if debug is True:
         print(cmd)
     proc=subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
