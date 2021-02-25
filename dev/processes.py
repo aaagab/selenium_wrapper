@@ -229,12 +229,12 @@ class Processes():
             return self.procs_by_name[name]
         return []
 
-    def kill(self, pid_name):
+    def kill(self, pid):
         try:
-            pid_name=int(pid_name)
-            cmd="taskkill /PID {} /F".format(pid_name)
+            pid=int(pid)
+            cmd="taskkill /PID {} /F".format(pid)
         except:
-            cmd="taskkill /F /IM {}".format(pid_name)
+            cmd="taskkill /F /IM {}".format(pid)
         
         if self.debug is True:
             print(cmd)
