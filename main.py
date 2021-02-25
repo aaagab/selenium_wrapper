@@ -128,8 +128,6 @@ selenium_wrapper --connect --driver firefox --url events/create --select 'frmEve
                 srv.get_driver().get(url)
 
 
-
-
         if args.refresh.here:
             srv.refresh(wait_ms=args.refresh.value)
 
@@ -215,26 +213,3 @@ selenium_wrapper --connect --driver firefox --url events/create --select 'frmEve
         #         alert.accept()
 
 
-
-   
-
-
-      
-
-
-        # srv.window_focus("cmd.exe")
-        # srv.window_focus("putty.exe")
-        # srv.window_focus("Code.exe")
-
-
-        # # Test section
-        # srv.get_elem("email_input")
-
-        # driver_name=dy_app.get_arg_values("--driver", ret="value", get_values=False)
-        # if driver_name is not None:
-        #     # print(srv.get_driver().dy["session"]["id"])
-        #     # print(srv.get_driver().dy["browser_session"])
-        #     # print(srv.get_driver().dy["browser_window"])
-
-        #     srv.browser_focus()
-        #     srv.get_driver().refresh()
