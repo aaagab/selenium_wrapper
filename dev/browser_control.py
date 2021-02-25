@@ -60,5 +60,6 @@ def window_focus(processes_obj, windows_obj, exe_name):
     windows_obj.focus(pid)
 
 def browser_focus(driver, windows_obj):
-    pid=driver.dy["browser_window"]["pid"]
+    pid=driver.dy["browser_pid"]
+    # pid=5300
     windows_obj.focus(pid)

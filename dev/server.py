@@ -18,7 +18,7 @@ from .drivers import get_drivers_data, get_driver_data, get_new_driver_session, 
 from .browser_control import get_elem, scroll, refresh, window_focus, browser_focus
 from .browser_window import get_root_browsers, get_selenium_browsers, get_browser_window
 from .processes import Processes
-from .sessions import set_sessions, close_sessions
+from .sessions import set_sessions, close_sessions, get_session, get_browser_pid
 
 from ..gpkgs import shell_helpers as shell
 from ..gpkgs import message as msg
@@ -62,6 +62,7 @@ class SeleniumServer():
             "firefox",
             "edge",
             "iexplorer",
+            # "msedge",
             # "opera",
             # "phantomjs",
         ]
@@ -135,7 +136,6 @@ class SeleniumServer():
 
         self.driver=self.get_driver()
 
-
     def close_driver_processes(self,
         driver_filen_browser,
         driver_filen_exe,
@@ -163,51 +163,41 @@ class SeleniumServer():
 
     def get_driver(self):
         if self.driver is None:
-            set_sessions(
+            session=get_session(
                 debug=self.debug,
-                drivers_data=self.drivers_data,
+                driver_data=self.driver_data,
                 grid_url=self.grid_url,
                 grid_url_pid=self.get_grid_url_pid(),
-                processes_obj=self.processes,
             )
-            session=self.driver_data["session"]
 
             if session is None:
-                self.close_driver_processes(
-                    driver_filen_browser=self.driver_data["filen_browser"],
-                    driver_filen_exe=self.driver_data["filen_exe"],
-                    driver_name=self.driver_data["name"],
-                    driver_proc_name=self.driver_data["driver_proc_name"],
-                )
                 self.driver = webdriver.Remote(self.grid_url, self.driver_data["capabilities"])
                 self.processes.init()
-                set_sessions(
+                
+                self.driver_data["session"]=get_session(
                     debug=self.debug,
-                    drivers_data=self.drivers_data,
+                    driver_data=self.driver_data,
                     grid_url=self.grid_url,
                     grid_url_pid=self.get_grid_url_pid(),
-                    processes_obj=self.processes,
                 )
-                # populate session and browser from here.
+
             else:
+                self.driver_data["session"]=session
                 self.driver=get_new_driver_session(
                     grid_url=self.grid_url,
                     session_id=session["id"],
                 )
 
-                # pprint(self.driver_data["browser_session"])                    
+            self.driver_data["browser_pid"]=get_browser_pid(
+                self.driver_data["filen_browser"],
+                self.driver_data["driver_proc_name"],
+                self.get_grid_url_pid(),
+                self.processes,
+            )
 
             setattr(self.driver, "dy", self.driver_data)
             setattr(self.driver, "scroll", self.scroll)
             setattr(self.driver, "get_elem", self.get_elem)
-
-            root_browsers=get_root_browsers(self.debug, self.driver_data["filen_browser"], self.processes)
-            self.driver_data["browser_window"]=get_browser_window(
-                driver_browser_pid=self.driver_data["browser_session"]["pid"],
-                driver_name=self.driver_data["name"],
-                processes_obj=self.processes,
-                root_browsers=root_browsers,
-            )
         return self.driver
 
     def get_elem(self, id, wait_ms=2000, error=True):
