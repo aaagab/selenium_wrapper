@@ -6,6 +6,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 
 def get_elem(
     driver, 
