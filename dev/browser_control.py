@@ -8,6 +8,9 @@ import subprocess
 import sys
 import time
 
+from ..gpkgs.timeout import TimeOut
+from ..gpkgs import message as msg
+
 def get_elem(
     driver, 
     id, 
@@ -29,6 +32,7 @@ def get_elem(
         except BaseException as e:
             if e.__class__.__name__ == "NoSuchElementException":
                 continue
+
     return elem
 
 def scroll(debug, driver, percent=None, wait_ms=None):
