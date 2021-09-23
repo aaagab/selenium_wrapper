@@ -201,7 +201,7 @@ class SeleniumServer():
         return self.driver
 
     def get_elem(self, id, wait_ms=2000, error=True):
-        get_elem(self.get_driver(), id=id, wait_ms=wait_ms, error=error)
+        return get_elem(self.get_driver(), id=id, wait_ms=wait_ms, error=error)
 
     def scroll(self, percent=None, wait_ms=None):
         scroll(self.debug, self.get_driver(), percent=percent, wait_ms=wait_ms)
