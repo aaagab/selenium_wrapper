@@ -3,6 +3,7 @@
         "Gabriel Auger"
     ],
     "deps": [
+        "0948ff9f-ab89-41bc-81d7-6ef81644b902|getpath|0.2.1|gpm",
         "f093c509-18ac-4feb-8412-f556ec2e838d|geturl|0.2.0|gpm",
         "cf09346e-b436-4259-b6dd-e56516b508a5|message|6.2.0|gpm",
         "ca72f0a9-8a9b-4ff6-a013-e5d0974cb1e5|options|8.5.0|gpm",
@@ -17,7 +18,7 @@
         "MIT"
     ],
     "name": "selenium_wrapper",
-    "timestamp": 1632428918.824726,
+    "timestamp": 1636572804.3259852,
     "uuid4": "8af5aa64-70d1-4992-a53c-e9dcde67fc1f",
-    "version": "6.0.2"
+    "version": "6.1.0"
 }

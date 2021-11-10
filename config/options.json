@@ -11,15 +11,14 @@
         "show": false
     },
     "click": {
-        "args": "delay",
+        "args": "delay,file",
         "info": "select element by id and perform click",
         "nested": true,
-        "type": "json",
         "values": "ELEMENT_ID"
     },
     "connect": {
         "aliases": "--connect,--conn,-c",
-        "args": "click,cmd,console,driver,url,focus,page,refresh,scroll,select",
+        "args": "click,cmd,console,driver,url,focus,files,page,refresh,scroll,scroll_to,select",
         "info": "Launch a selected driver on top of the grid",
         "required": "driver"
     },
@@ -55,6 +54,20 @@
     },
     "exit": {
         "info": "Close All Selenium processes"
+    },
+    "file": {
+        "info": "Click input element requires a file",
+        "nested": true,
+        "type": "file",
+        "nvalues": "1"
+    },
+    "files": {
+        "args": "delay",
+        "info": "To populate input file element(s)",
+        "nested": true,
+        "type": "json",
+        "nvalues": "+",
+        "values": "{'ID': 'PATH'}"
     },
     "focus": {
         "info": "focus browser window. This action works partially on iexplorer or edge, those browser needs not to be minimized in order to operate.",
@@ -109,6 +122,13 @@
         "nested": true,
         "nvalues": "?",
         "values": "PERCENTAGE"
+    },
+    "scroll_to": {
+        "args": "delay",
+        "info": "scroll to elem in browser page",
+        "nested": true,
+        "nvalues": "1",
+        "values": "ELEMENT_ID"
     },
     "selenium_options": {
         "info": "Show all command line options for Selenium Server"
