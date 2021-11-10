@@ -35,6 +35,12 @@ def get_elem(
 
     return elem
 
+def scroll_to(debug, driver, element_id, wait_ms=None):
+    if wait_ms is not None:
+        time.sleep(float(wait_ms)/1000)
+
+    driver.execute_script("document.getElementById('{}').scrollIntoView()".format(element_id))
+
 def scroll(debug, driver, percent=None, wait_ms=None):
     from selenium.webdriver.common.keys import Keys
     if wait_ms is not None:
