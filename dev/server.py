@@ -15,7 +15,7 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from .drivers import get_drivers_data, get_driver_data, get_new_driver_session, close_driver, close_driver_browsers
-from .browser_control import get_elem, scroll, refresh, window_focus, browser_focus
+from .browser_control import get_elem, scroll, refresh, window_focus, browser_focus, scroll_to
 from .browser_window import get_root_browsers, get_selenium_browsers, get_browser_window
 from .processes import Processes
 from .sessions import set_sessions, close_sessions, get_session, get_browser_pid
@@ -197,6 +197,7 @@ class SeleniumServer():
 
             setattr(self.driver, "dy", self.driver_data)
             setattr(self.driver, "scroll", self.scroll)
+            setattr(self.driver, "scroll_to", self.scroll_to)
             setattr(self.driver, "get_elem", self.get_elem)
         return self.driver
 
@@ -205,6 +206,9 @@ class SeleniumServer():
 
     def scroll(self, percent=None, wait_ms=None):
         scroll(self.debug, self.get_driver(), percent=percent, wait_ms=wait_ms)
+
+    def scroll_to(self, element_id, wait_ms=None):
+        scroll_to(self.debug, self.get_driver(), element_id, wait_ms=wait_ms)
 
     def refresh(self, wait_ms=None):
         refresh(self.get_driver(), wait_ms=None)

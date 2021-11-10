@@ -51,6 +51,8 @@ selenium_wrapper --connect --driver firefox --url departments --path-project A:\
 selenium_wrapper --connect --driver firefox --url departments --hostname https://www.example.com/e/example
 selenium_wrapper --connect --driver firefox --url events/create --select "[{'frmEventDescription': 'mytext'}]" --delay 1000
 selenium_wrapper --connect --driver firefox --url events/create --select 'frmEventDescription' --delay 1000
+main.py --connect --driver firefox --focus --url request/new --console --delay 1000 --click input-organization-chart --file _tests/files/file2.txt
+main.py --connect --driver firefox --focus --url request/new --console --delay 1000 --files "{'input-organization-chart': '_tests/files/file2.txt'}"
         """)
         sys.exit(0)
     elif args.gui.here:
@@ -133,10 +135,16 @@ selenium_wrapper --connect --driver firefox --url events/create --select 'frmEve
 
         if args.scroll.here:
             srv.get_driver().scroll(percent=args.scroll.value, wait_ms=args.delay.value)
+            args.delay.value=None
+
+        if args.scroll_to.here:
+            srv.get_driver().scroll_to(element_id=args.scroll_to.value, wait_ms=args.delay.value)
+            args.delay.value=None
 
         if args.select.here:
             if args.delay.value is not None:
                 time.sleep(float(args.delay.value)/1000)
+                args.delay.value=None
 
             if isinstance(args.select.value, str):
                 elem=srv.get_elem(args.select.value)
@@ -154,10 +162,24 @@ selenium_wrapper --connect --driver firefox --url events/create --select 'frmEve
         if args.click.here:
             if args.delay.value is not None:
                 time.sleep(float(args.delay.value)/1000)
+                args.delay.value=0
 
             elem=srv.get_driver().get_elem(args.click.value)
-            elem.send_keys("")
-            elem.click()
+            if args.file.here is True:
+                elem.send_keys(args.file.value)
+            else:
+                elem.send_keys("")
+                elem.click()
+
+        if args.files.here:
+            if args.delay.value is not None:
+                time.sleep(float(args.delay.value)/1000)
+                args.delay.value=0
+
+            for elem_id, elem_path in args.files.value.items():
+                elem_path=pkg.getpath(elem_path, "file")
+                elem=srv.get_driver().get_elem(elem_id)
+                elem.send_keys(elem_path)
 
         if args.console.here:
             if args.focus.here is False:
