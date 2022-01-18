@@ -1,5 +1,5 @@
 ```shell
-pip3 install selenium
+pip install pyautogui selenium lxml msedge-selenium-tools
 ```
 Java needs to be installed to (i.e. "jre-8u251-windows-x64.exe")
 
