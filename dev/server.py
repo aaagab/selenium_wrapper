@@ -188,12 +188,15 @@ class SeleniumServer():
                     session_id=session["id"],
                 )
 
-            self.driver_data["browser_pid"]=get_browser_pid(
-                self.driver_data["filen_browser"],
-                self.driver_data["driver_proc_name"],
-                self.get_grid_url_pid(),
-                self.processes,
-            )
+            if self.driver_data["name"] == "firefox":
+                self.driver_data["browser_pid"]=self.driver_data["session"]["capabilities"]["moz:processID"]
+            else:
+                self.driver_data["browser_pid"]=get_browser_pid(
+                    self.driver_data["filen_browser"],
+                    self.driver_data["driver_proc_name"],
+                    self.get_grid_url_pid(),
+                    self.processes,
+                )
 
             setattr(self.driver, "dy", self.driver_data)
             setattr(self.driver, "scroll", self.scroll)
