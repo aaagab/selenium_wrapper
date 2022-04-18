@@ -4,7 +4,7 @@
     ],
     "deps": [
         "0948ff9f-ab89-41bc-81d7-6ef81644b902|getpath|0.2.1|gpm",
-        "f093c509-18ac-4feb-8412-f556ec2e838d|geturl|0.2.0|gpm",
+        "f093c509-18ac-4feb-8412-f556ec2e838d|geturl|0.3.0|gpm",
         "cf09346e-b436-4259-b6dd-e56516b508a5|message|6.2.0|gpm",
         "ca72f0a9-8a9b-4ff6-a013-e5d0974cb1e5|options|8.5.0|gpm",
         "df328dbe-54ab-4a6d-b7a2-932b0eaee30a|shell_helpers|5.3.1|gpm",
@@ -18,7 +18,7 @@
         "MIT"
     ],
     "name": "selenium_wrapper",
-    "timestamp": 1647035389.176001,
+    "timestamp": 1650316232.7101445,
     "uuid4": "8af5aa64-70d1-4992-a53c-e9dcde67fc1f",
-    "version": "6.2.0"
+    "version": "6.3.0"
 }
