@@ -45,6 +45,7 @@ class SeleniumServer():
         self.direpa_drivers=os.path.join(self.direpa_media, "drivers")
         self.filenpa_java=r"C:\Program Files\Java\jre1.8.0_251\bin\java"
         self.filenpa_java=r"C:\Program Files (x86)\Common Files\Oracle\Java\javapath\java.exe"
+        self.filenpa_java=r"C:\Users\john\fty\etc\selenium_media\java\bin\java.exe"
         self.host="127.0.0.1"
         self.port="4444"
         self.grid_url = "http://127.0.0.1:{}/wd/hub".format(self.port)
@@ -121,6 +122,9 @@ class SeleniumServer():
                 cmd_str+=prefix+arg
             if self.debug is True:
                 print(cmd_str)
+
+            if not os.path.exists(self.filenpa_java):
+                msg.error("Java not found at '{}".format(self.filenpa_java),exit=1)
 
             self.grid_url_pid=subprocess.Popen(cmd, creationflags=DETACHED_PROCESS).pid
             status="started"
