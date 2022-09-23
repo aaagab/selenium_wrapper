@@ -235,7 +235,6 @@ click on one installed extension and get id from url
 `chrome://extensions/?id=djcglbmbegflehmbfleechkjhmedcopn`
 Then on page chrome://extensions enable "developer mode" and click on "Pack extension"
 In extension root directory type:
-C:\Users\<Your_User_Name>\AppData\Local\Google\Chrome\User Data\Default\Extensions\$ID$
 C:\Users\user\AppData\Local\Google\Chrome\User Data\Default\Extensions\djcglbmbegflehmbfleechkjhmedcopn\2022.1.18.937_0
 Leave the "Private Key" field blank" and click "Pack extension".
 
