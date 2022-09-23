@@ -104,7 +104,7 @@ def get_drivers_data(
 
         if name == "chrome" and accessibility is True:
             chrome_options=ChromeOptions()
-            chrome_options.add_extension(os.path.join(driver["direpa_extensions"], "site_improve_2022.1.18.937_0.crx"))
+            chrome_options.add_extension(os.path.join(driver["direpa_extensions"], "site_improve_2022.7.18.484_0.crx"))
             driver["capabilities"]=chrome_options.to_capabilities()
         elif name == "iexplorer":
             # solve issue:  Protected Mode settings are not the same for all zones.
