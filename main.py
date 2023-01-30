@@ -13,6 +13,10 @@ import yaml
 
 import pyautogui
 
+
+from selenium.webdriver.common.by import By
+
+
 # pip3 install pyautogui
 
 if __name__ == "__main__":
@@ -118,14 +122,14 @@ if __name__ == "__main__":
                             print(traceback.format_exc())
 
                     if confirmCert is True:
-                        srv.get_driver().find_element_by_id("advancedButton").click()
-                        srv.get_driver().find_element_by_id("exceptionDialogButton").click()
+                        srv.get_driver().find_element(By.ID, "advancedButton").click()
+                        srv.get_driver().find_element(By.ID, "exceptionDialogButton").click()
                 elif srv.get_driver().dy["name"] == "chrome":
                     srv.get_driver().get(url)
                     advanced_button=srv.get_driver().get_elem("details-button", error=False, wait_ms=800)
                     if advanced_button is not None:
                         advanced_button.click()
-                        srv.get_driver().find_element_by_id("proceed-link").click()
+                        srv.get_driver().find_element(By.ID, "proceed-link").click()
 
                     # print(advanced_button)
                 else:
@@ -164,13 +168,6 @@ if __name__ == "__main__":
                     elem.send_keys("")
                     elem.click()
 
-        for arg in args.connect.file._branches:
-            if arg._here is True:
-                if arg.wait._value is not None:
-                    time.sleep(float(arg.wait._value)/1000)
-                elem=srv.get_driver().get_elem(arg._value)
-                elem.send_keys(arg.path._value)
-
         if args.connect.console._here:
             if args.connect.focus._here is False:
                 srv.browser_focus()
@@ -206,7 +203,7 @@ if __name__ == "__main__":
         #         )
         #         driver.get('about:preferences#privacy')
         #         driver.get_elem("clearSiteDataButton", wait_ms=3000).click()
-        #         # driver.find_element_by_css_selector("#clearButton")
+        #         # driver.find_element(By.CSS_SELECTOR, "#clearButton")
         #         driver.get_elem("clearButton", wait_ms=3000).click()
         #         sys.exit()
         #         wait = WebDriverWait(driver, timeout)

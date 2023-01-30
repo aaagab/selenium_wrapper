@@ -4,7 +4,6 @@ import os
 import sys
 
 from selenium import webdriver
-from msedge.selenium_tools import EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
@@ -137,13 +136,15 @@ def get_drivers_data(
             # fp.set_preference("browser.download.dir", "H:\Downloads") 
         # elif name == "msedge":
         elif name == "edge":
-            options = EdgeOptions()
+            options = webdriver.EdgeOptions()
             options.use_chromium = True
             driver["capabilities"]=options.to_capabilities()
-            # driver = Edge(options)
-        #     options = webdriver.
-        #     options.ignore_protected_mode_settings = True
-        #     driver["capabilities"]=options.to_capabilities()
+
+            # add that 
+            # https://stackoverflow.com/questions/70794746/ms-way-to-python-code-edge-session-using-selenium-4
+            # options = webdriver.
+            # options.ignore_protected_mode_settings = True
+            # driver["capabilities"]=options.to_capabilities()
                 
             # with profile fp.set_preference("marionette.actors.enabled", False) not crashing working
     return drivers_data
