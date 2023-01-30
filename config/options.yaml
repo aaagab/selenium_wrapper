@@ -46,18 +46,18 @@ args:
       _info: focus browser window. This action works partially on iexplorer or edge, those
         browser needs not to be minimized in order to operate.
 
-    file:
-      _info: To populate input file element(s)
-      _repeat: fork
-      _values: +
-      _type: json
-      id:
-        _type: str
-      path:
-        _type: file
-      wait:
-        _values: '?'
-        _label: MILLISECONDS
+    # file:
+    #   _info: To populate input file element(s)
+    #   _repeat: fork
+    #   _values: +
+    #   _type: json
+    #   id:
+    #     _type: str
+    #   path:
+    #     _type: file
+    #   wait:
+    #     _values: '?'
+    #     _label: MILLISECONDS
 
     page:
       _info: this function needs that the current project have a file named hostname_url.txt
