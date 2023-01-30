@@ -1,5 +1,5 @@
 ```shell
-pip install pyautogui selenium lxml msedge-selenium-tools
+pip install pyautogui selenium==4.4.3 lxml msedge-selenium-tools
 ```
 Java needs to be installed to (i.e. "jre-8u251-windows-x64.exe")
 
@@ -200,31 +200,6 @@ Typical Debug:
 ```
 
 If firefox stops working again because of Marion
-
-
-
-
-The latest edge finally installed during an update: Version 88.0.705.74 (Official build) (64-bit)
-```python
-pip3 install msedge-selenium-tools
-
-from msedge.selenium_tools import EdgeOptions
- elif name == "edge":
-            # browser_name="MicrosoftEdge"
-            # session_proc_name="System"
-            # filen_exe="MicrosoftWebDriver.bat"
-            # driver_proc_name=filen_exe.replace(".bat", ".exe")
-            browser_name="msedge"
-            filen_browser="msedge.exe"
-            capability_name="EDGE"
-            session_proc_name="Msedge"
-            filen_exe="msedgedriver.exe"
-
-     elif name == "edge":
-            options = EdgeOptions()
-            options.use_chromium = True
-            driver["capabilities"]=options.to_capabilities()
-```
 
 for internet explorer make sure you go to options and security tab and for each zone, unchek "enable protected mode" otherwise you are going to have issue in the log file "iexplorer a Protected Mode boundary has been crossed"
 
