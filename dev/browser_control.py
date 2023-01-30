@@ -8,6 +8,8 @@ import subprocess
 import sys
 import time
 
+from selenium.webdriver.common.by import By
+
 from ..gpkgs.timeout import TimeOut
 from ..gpkgs import message as msg
 
@@ -27,7 +29,7 @@ def get_elem(
             else:
                 return None
         try:
-            elem=driver.find_element_by_id(id)
+            elem=driver.find_element(By.ID, id)
             break
         except BaseException as e:
             if e.__class__.__name__ == "NoSuchElementException":
