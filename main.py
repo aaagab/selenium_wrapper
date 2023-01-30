@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 from pprint import pprint
+import json
 import re
 import os
 import sys
@@ -8,6 +9,7 @@ import subprocess
 import shlex
 import time
 import traceback
+import yaml
 
 import pyautogui
 
@@ -24,12 +26,18 @@ if __name__ == "__main__":
     pkg=importlib.import_module(module_name)
     del sys.path[0]
 
-    args, dy_app=pkg.Options(filenpa_app="gpm.json", filenpa_args="config/options.json", allow_empty=True, cli_expand=True).get_argsns_dy_app()
+    # args, dy_app=pkg.Options(filenpa_app="gpm.json", filenpa_args="config/options.json", allow_empty=True, cli_expand=True).get_argsns_dy_app()
 
-    debug=args.debug.here
+    args=pkg.Nargs(
+        options_file="config/options.yaml",
+        metadata=dict(executable="selenium_wrapper"),
+        substitute=True,
+    ).get_args()
+
+    debug=args.debug._here
     direpa_media=os.path.join(os.path.expanduser("~"), "fty", "etc", "selenium_media")
 
-    if args.selenium_options.here:
+    if args.selenium_options._here:
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         print()
         print("## Standalone")
@@ -44,63 +52,60 @@ if __name__ == "__main__":
         cmd=[ srv.filenpa_java, "-jar", srv.filenpa_selenium_server, "-role", "node", "-help" ]
         subprocess.run(cmd)
         sys.exit(0)
-    elif args.examples.here:
-        print("""
-selenium_wrapper --connect --driver chrome --accessibility --refresh --url https://www.example.com/e/example/login
-selenium_wrapper --connect --driver firefox --url departments --path-project A:\wrk\e\example\1\src --params "{'fruit':'apple','region':'greenland'}"
-selenium_wrapper --connect --driver firefox --url departments --hostname https://www.example.com/e/example
-selenium_wrapper --connect --driver firefox --url events/create --select "[{'frmEventDescription': 'mytext'}]" --delay 1000
-selenium_wrapper --connect --driver firefox --url events/create --select 'frmEventDescription' --delay 1000
-main.py --connect --driver firefox --focus --url request/new --console --delay 1000 --click input-organization-chart --file _tests/files/file2.txt
-main.py --connect --driver firefox --focus --url request/new --console --delay 1000 --files "{'input-organization-chart': '_tests/files/file2.txt'}"
-        """)
-        sys.exit(0)
-    elif args.gui.here:
+    elif args.gui._here:
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         srv.show_gui()
         sys.exit(0)
-    elif args.exit.here:
+    elif args.exit._here:
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         srv.reset()
         sys.exit(0)
-    elif args.reset.here:
+    elif args.reset._here:
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
-        srv.reset(args.drivers.values)
+        srv.reset(args.drivers._values)
 
-    if args.connect.here or args.accessibility.here:
-        srv=pkg.SeleniumServer(accessibility=args.accessibility.here, debug=debug, direpa_media=direpa_media)
+    if args.connect._here or args.accessibility._here:
+        srv=pkg.SeleniumServer(accessibility=args.accessibility._here, debug=debug, direpa_media=direpa_media)
         cmd_pid=None
 
-        if args.cmd.here:
+        if args.connect.cmd._here:
             cmd_pid=srv.windows.get_active()
 
-
-        if args.accessibility.here and args.driver.value != "chrome":
+        if args.accessibility._here and args.connect.driver._value != "chrome":
             print("To use accessibility plugin, please use chrome driver.")
             sys.exit(1)
-        # if args.connect.here:
-        srv.connect(args.driver.value, reset=args.reset.here)
-        # elif args.accessibility.here:
+        # if args.connect._here:
+        srv.connect(args.connect.driver._value, reset=args.connect.driver.reset._here)
+        # elif args.accessibility._here:
             # print("Here")
             # sys.exit()
-            # srv.connect("chrome", reset=args.reset.here)
+            # srv.connect("chrome", reset=args.reset._here)
 
-        if args.focus.here:
+        if args.connect.focus._here:
             srv.browser_focus()
 
-        if args.url.here:
-            url_alias=args.url_alias.value
+        if args.connect.url._here:
+            url_alias=args.connect.url.alias._value
             if url_alias is None:
                 url_alias="hostname_url"
+
+            params=[]
+            for arg in args.connect.url.param._branches:
+                if arg._here is True:
+                    param=(arg._value, )
+                    if arg.value._here is True:
+                        param+=(arg.value._value,)
+                    params.append(param)
+
             url=pkg.geturl(
-                args.url.value,
+                args.connect.url._value,
                 alias=url_alias, 
-                direpa_project=args.path_project.value,
-                hostname_path=args.hostname.value,
-                params=args.params.value,
+                direpa_project=args.connect.url.path_project._value,
+                hostname_path=args.connect.url.hostname._value,
+                params=params,
             )
 
-            if args.insecure.here:
+            if args.connect.url.insecure._here:
                 if srv.get_driver().dy["name"] == "firefox":
                     confirmCert=False
                     try:
@@ -130,63 +135,48 @@ main.py --connect --driver firefox --focus --url request/new --console --delay 1
                 srv.get_driver().get(url)
 
 
-        if args.refresh.here:
-            srv.refresh(wait_ms=args.refresh.value)
+        if args.connect.refresh._here:
+            srv.refresh(wait_ms=args.connect.refresh.wait._value)
 
-        if args.scroll.here:
-            srv.get_driver().scroll(percent=args.scroll.value, wait_ms=args.delay.value)
-            args.delay.value=None
+        if args.connect.scroll._here:
+            srv.get_driver().scroll(percent=args.connect.scroll._value, wait_ms=args.connect.scroll.wait._value)
 
-        if args.scroll_to.here:
-            srv.get_driver().scroll_to(element_id=args.scroll_to.value, wait_ms=args.delay.value)
-            args.delay.value=None
+        if args.connect.scroll_to._here:
+            srv.get_driver().connect.scroll_to(element_id=args.connect.scroll_to._value, wait_ms=args.connect.scroll_to.wait._value)
 
-        if args.select.here:
-            if args.delay.value is not None:
-                time.sleep(float(args.delay.value)/1000)
-                args.delay.value=None
+        for arg in args.connect.select._branches:
+            if arg._here is True:
+                if arg.wait._value is not None:
+                    time.sleep(float(arg.wait._value)/1000)
+                elem=srv.get_elem(arg._value)
+                if arg.value._value is not None:
+                    elem.send_keys(arg.value._value)
+          
+        for arg in args.connect.click._branches:
+            if arg._here is True:
+                if arg.wait._value is not None:
+                    time.sleep(float(arg.wait._value)/1000)
+                elem=srv.get_driver().get_elem(arg._value)
 
-            if isinstance(args.select.value, str):
-                elem=srv.get_elem(args.select.value)
-                elem.send_keys("")
-            elif isinstance(args.select.value, list):
-                for dy in args.select.value:
-                    if isinstance(dy, dict):
-                        key=next(iter(dy))
-                        elem=srv.get_elem(key)
-                        elem.send_keys(dy[key])
-                    elif isinstance(dy, str):
-                        elem=srv.get_elem(dy)
-                        elem.send_keys("")
+                if arg.file._here is True:
+                    elem.send_keys(arg.file._value)
+                else:
+                    elem.send_keys("")
+                    elem.click()
 
-        if args.click.here:
-            if args.delay.value is not None:
-                time.sleep(float(args.delay.value)/1000)
-                args.delay.value=0
+        for arg in args.connect.file._branches:
+            if arg._here is True:
+                if arg.wait._value is not None:
+                    time.sleep(float(arg.wait._value)/1000)
+                elem=srv.get_driver().get_elem(arg._value)
+                elem.send_keys(arg.path._value)
 
-            elem=srv.get_driver().get_elem(args.click.value)
-            if args.file.here is True:
-                elem.send_keys(args.file.value)
-            else:
-                elem.send_keys("")
-                elem.click()
-
-        if args.files.here:
-            if args.delay.value is not None:
-                time.sleep(float(args.delay.value)/1000)
-                args.delay.value=0
-
-            for elem_id, elem_path in args.files.value.items():
-                elem_path=pkg.getpath(elem_path, "file")
-                elem=srv.get_driver().get_elem(elem_id)
-                elem.send_keys(elem_path)
-
-        if args.console.here:
-            if args.focus.here is False:
+        if args.connect.console._here:
+            if args.connect.focus._here is False:
                 srv.browser_focus()
             pyautogui.hotkey('ctrl', 'shift', 'k')
 
-        if args.accessibility.here:
+        if args.accessibility._here:
             import pyautogui
             # you have to take a screenshot of the button
             extn = pyautogui.locateOnScreen(os.path.join(srv.driver_data["direpa_extensions"], "site_improve_button.png"))
@@ -197,14 +187,14 @@ main.py --connect --driver firefox --focus --url request/new --console --delay 1
             time.sleep(.5)
             pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
 
-        if args.driver_info.here:
+        if args.driver_info._here:
             pprint(srv.get_driver().dy)
 
-        if args.cmd.here:
+        if args.connect.cmd._here:
             srv.windows.focus(cmd_pid)
            
 
-        # if args.clear_cache.here:
+        # if args.clear_cache._here:
         #     driver=srv.get_driver()
         #     if driver.dy["name"] == "firefox": 
         #         print("continue")
