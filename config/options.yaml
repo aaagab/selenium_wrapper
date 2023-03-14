@@ -20,9 +20,19 @@ args:
 
     click:
       _aliases: --click,-c
-      _info: select element by id and perform click
-      _label: ELEMENT_ID
+      _info: select element and perform click
       _repeat: fork
+      _xor: id,query
+      id:
+        _info: find element by id
+        _type: str
+      query:
+        _examples:  --query "[data-id='RequestsDeny']" --index 0
+        _info: find element by querySelectorAll
+        _type: str
+        index:
+          _info: select query element by index. defaut is zero.
+          _type: int
       wait:
         _values: '?'
         _label: MILLISECONDS
@@ -86,10 +96,13 @@ args:
         _label: MILLISECONDS
 
     select:
-      _info: Select element by id
+      _info: Select element
       _type: str
-      _label: ELEMENT_ID
       _repeat: fork
+      _xor: id,query
+      "@": 
+        - args.connect.click.id
+        - args.connect.click.query
       value:
         _type: str 
       wait:
