@@ -126,7 +126,7 @@ if __name__ == "__main__":
                         srv.get_driver().find_element(By.ID, "exceptionDialogButton").click()
                 elif srv.get_driver().dy["name"] == "chrome":
                     srv.get_driver().get(url)
-                    advanced_button=srv.get_driver().get_elem("details-button", error=False, wait_ms=800)
+                    advanced_button=srv.get_driver().get_elem(id="details-button", error=False, wait_ms=800)
                     if advanced_button is not None:
                         advanced_button.click()
                         srv.get_driver().find_element(By.ID, "proceed-link").click()
@@ -146,13 +146,17 @@ if __name__ == "__main__":
             srv.get_driver().scroll(percent=args.connect.scroll._value, wait_ms=args.connect.scroll.wait._value)
 
         if args.connect.scroll_to._here:
-            srv.get_driver().connect.scroll_to(element_id=args.connect.scroll_to._value, wait_ms=args.connect.scroll_to.wait._value)
+            srv.get_driver().scroll_to(element_id=args.connect.scroll_to._value, wait_ms=args.connect.scroll_to.wait._value)
 
         for arg in args.connect.select._branches:
             if arg._here is True:
                 if arg.wait._value is not None:
                     time.sleep(float(arg.wait._value)/1000)
-                elem=srv.get_elem(arg._value)
+                elem=srv.get_driver().get_elem(
+                    id=arg.id._value, 
+                    query=arg.query._value, 
+                    query_index=arg.query.index._value
+                )
                 if arg.value._value is not None:
                     elem.send_keys(arg.value._value)
           
@@ -160,7 +164,11 @@ if __name__ == "__main__":
             if arg._here is True:
                 if arg.wait._value is not None:
                     time.sleep(float(arg.wait._value)/1000)
-                elem=srv.get_driver().get_elem(arg._value)
+                elem=srv.get_driver().get_elem(
+                    id=arg.id._value, 
+                    query=arg.query._value, 
+                    query_index=arg.query.index._value
+                )
 
                 if arg.file._here is True:
                     elem.send_keys(arg.file._value)
