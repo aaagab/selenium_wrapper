@@ -154,8 +154,8 @@ if __name__ == "__main__":
                     time.sleep(float(arg.wait._value)/1000)
                 elem=srv.get_driver().get_elem(
                     id=arg.id._value, 
-                    query=arg.query._value, 
-                    query_index=arg.query.index._value
+                    xpath=arg.xpath._value,
+                    xpath_context=arg.xpath.context._value
                 )
                 if arg.value._value is not None:
                     elem.send_keys(arg.value._value)
@@ -166,8 +166,8 @@ if __name__ == "__main__":
                     time.sleep(float(arg.wait._value)/1000)
                 elem=srv.get_driver().get_elem(
                     id=arg.id._value, 
-                    query=arg.query._value, 
-                    query_index=arg.query.index._value
+                    xpath=arg.xpath._value,
+                    xpath_context=arg.xpath.context._value
                 )
 
                 if arg.file._here is True:

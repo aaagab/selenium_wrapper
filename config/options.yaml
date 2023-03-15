@@ -22,17 +22,17 @@ args:
       _aliases: --click,-c
       _info: select element and perform click
       _repeat: fork
-      _xor: id,query
+      _xor: id,xpath
       id:
         _info: find element by id
         _type: str
-      query:
-        _examples:  --query "[data-id='RequestsDeny']" --index 0
-        _info: find element by querySelectorAll
+      xpath:
+        _examples:  --xpath "//*[@data-id='RequestsDeny']" --context 
+        _info: find element by xpath
         _type: str
-        index:
-          _info: select query element by index. defaut is zero.
-          _type: int
+        context:
+          _info: select xpath context. default context is document
+          _type: str
       wait:
         _values: '?'
         _label: MILLISECONDS
@@ -99,10 +99,10 @@ args:
       _info: Select element
       _type: str
       _repeat: fork
-      _xor: id,query
+      _xor: id,xpath
       "@": 
         - args.connect.click.id
-        - args.connect.click.query
+        - args.connect.click.xpath
       value:
         _type: str 
       wait:
