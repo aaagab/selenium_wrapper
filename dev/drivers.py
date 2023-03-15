@@ -9,6 +9,14 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
+from selenium.webdriver.remote.remote_connection import LOGGER
+import logging
+
+LOGGER.setLevel(logging.WARNING)
+
+from urllib3.connectionpool import log as urllibLogger
+urllibLogger.setLevel(logging.WARNING)
+
 def get_driver_data(driver_names, drivers_data, name):
     if name not in driver_names:
         print("driver '{}' not found in {}".format(name, driver_names))
@@ -22,8 +30,6 @@ def get_drivers_data(
     direpa_logs=None,
     driver_names=[], 
 ):
-
-
     drivers_data=dict()
     for name in driver_names:
         drivers_data[name]=dict()
@@ -122,6 +128,7 @@ def get_drivers_data(
             # options.binary= FirefoxBinary(r"C:\Users\me\fty\etc\selenium_media\firefox_versions\firefox-81.0\firefox\firefox.exe")
             # options.binary= FirefoxBinary(r"C:\Users\me\fty\etc\selenium_media\firefox_versions\firefox-82.0\firefox\firefox.exe")
             options.set_capability("marionette", True)
+            # https://firefox-source-docs.mozilla.org/testing/geckodriver/TraceLogs.html
             options.log.level = "trace"
             options.add_argument("-devtools")
             driver["capabilities"]=options.to_capabilities()
