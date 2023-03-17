@@ -98,16 +98,31 @@ def get_elem(
 
     return None
 
-def scroll_to(debug, driver, element_id, wait_ms=None):
-    if wait_ms is not None:
-        time.sleep(float(wait_ms)/1000)
+def scroll_to(
+    driver, 
+    id=None,
+    xpath=None,
+    xpath_context=None,
+    wait_ms=None,
+    pause_ms=None
+):
+    if pause_ms is not None:
+        time.sleep(float(pause_ms)/1000)
 
-    driver.execute_script("document.getElementById('{}').scrollIntoView()".format(element_id))
+    element=get_elem(
+        driver=driver,
+        id=id,
+        xpath=xpath,
+        xpath_context=xpath_context,
+        wait_ms=wait_ms,
+    )
 
-def scroll(debug, driver, percent=None, wait_ms=None):
+    driver.execute_script("arguments[0].scrollIntoView(true);", element)
+
+def scroll(debug, driver, percent=None, pause_ms=None):
     from selenium.webdriver.common.keys import Keys
-    if wait_ms is not None:
-        time.sleep(float(wait_ms)/1000)
+    if pause_ms is not None:
+        time.sleep(float(pause_ms)/1000)
 
     if percent is None:
         percent=100
