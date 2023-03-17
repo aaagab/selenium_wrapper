@@ -9,7 +9,7 @@ import sys
 import time
 
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, JavascriptException
+from selenium.common.exceptions import NoSuchElementException, JavascriptException, StaleElementReferenceException
 
 from ..gpkgs.timeout import TimeOut
 from ..gpkgs import message as msg
@@ -19,9 +19,12 @@ def get_elem(
     id=None,
     xpath=None, 
     xpath_context=None,
-    wait_ms=2000,
+    wait_ms=None,
     error=True
 ):
+    if wait_ms is None:
+        wait_ms=2000
+
     timer=TimeOut(wait_ms, unit="milliseconds").start()
 
     if id is None and xpath is None:
@@ -40,10 +43,11 @@ def get_elem(
                 sys.exit(1)
             else:
                 return None
-        
+
+        element=None
         if xpath is None:
             try:
-                return driver.find_element(By.ID, id)
+                element=driver.find_element(By.ID, id)
             except NoSuchElementException as e:
                 pass
         else:
@@ -68,7 +72,7 @@ def get_elem(
                 ))
 
                 if len(elems) == 1:
-                    return elems[0]
+                    element=elems[0]
                 elif len(elems) > 0:
                     msg.error("'{}' elements have been found but only one needs to be selected. (use xpath index notation)".format(len(elems)))
                     index=1
@@ -80,10 +84,17 @@ def get_elem(
                         ))
                         index+=1
                     sys.exit(1)
-            
+
             except JavascriptException:
                 msg.error("Wrong javascript syntax for xpath '{}' and context '{}'.".format(xpath, xpath_context))
                 raise
+
+        if element is not None:
+            try:
+                element.is_enabled() and element.is_displayed()
+                return element
+            except StaleElementReferenceException:
+                continue
 
     return None
 
