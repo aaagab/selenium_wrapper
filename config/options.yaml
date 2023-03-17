@@ -34,7 +34,10 @@ args:
           _info: select xpath context. default context is document
           _type: str
       wait:
-        _values: '?'
+        _info: time to wait before giving-up searching the element
+        _label: MILLISECONDS
+      pause:
+        _info: pause in milliseconds before executing the action
         _label: MILLISECONDS
       file:
         _info: Click input element requires a file
@@ -68,19 +71,21 @@ args:
     scroll:
       _aliases: --scroll,-s
       _info: scroll browser page. Default go bottom
+      _repeat: fork
       _values: '?'
       _label: PERCENTAGE
-      wait:
-        _values: '?'
-        _label: MILLISECONDS
+      "@":
+        - args.connect.click.pause
 
     scroll_to:
       _info: scroll to elem in browser page
-      _values: '1'
-      _label: ELEMENT_ID
-      wait:
-        _values: '?'
-        _label: MILLISECONDS
+      _repeat: fork
+      _xor: id,xpath
+      "@": 
+        - args.connect.click.id
+        - args.connect.click.xpath
+        - args.connect.click.wait
+        - args.connect.click.pause
 
     select:
       _info: Select element
@@ -89,11 +94,10 @@ args:
       "@": 
         - args.connect.click.id
         - args.connect.click.xpath
+        - args.connect.click.wait
+        - args.connect.click.pause
       value:
         _type: str 
-      wait:
-        _values: '?'
-        _label: MILLISECONDS
 
     url:
       _aliases: --url,-u
