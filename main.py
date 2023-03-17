@@ -19,6 +19,9 @@ from selenium.webdriver.common.by import By
 
 # pip3 install pyautogui
 
+def get_accepted_keys():
+    return ['\t', '\n', '\r', ' ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', 'a', 'b', 'c', 'd', 'e','f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~', 'accept', 'add', 'alt', 'altleft', 'altright', 'apps', 'backspace', 'browserback', 'browserfavorites', 'browserforward', 'browserhome', 'browserrefresh', 'browsersearch', 'browserstop', 'capslock', 'clear', 'convert', 'ctrl', 'ctrlleft', 'ctrlright', 'decimal', 'del', 'delete', 'divide', 'down', 'end', 'enter', 'esc', 'escape', 'execute', 'f1', 'f10', 'f11', 'f12', 'f13', 'f14', 'f15', 'f16', 'f17', 'f18', 'f19', 'f2', 'f20', 'f21', 'f22', 'f23', 'f24', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'final', 'fn', 'hanguel', 'hangul', 'hanja', 'help', 'home', 'insert', 'junja', 'kana', 'kanji', 'launchapp1', 'launchapp2', 'launchmail', 'launchmediaselect', 'left', 'modechange', 'multiply', 'nexttrack', 'nonconvert', 'num0', 'num1', 'num2', 'num3', 'num4', 'num5', 'num6', 'num7', 'num8', 'num9', 'numlock', 'pagedown', 'pageup', 'pause', 'pgdn', 'pgup', 'playpause', 'prevtrack', 'print', 'printscreen', 'prntscrn', 'prtsc', 'prtscr', 'return', 'right', 'scrolllock', 'select', 'separator', 'shift', 'shiftleft', 'shiftright', 'sleep', 'space', 'stop', 'subtract', 'tab', 'up', 'volumedown', 'volumemute', 'volumeup', 'win', 'winleft', 'winright', 'yen', 'command', 'option', 'optionleft', 'optionright']
+
 if __name__ == "__main__":
     import sys, os
 
@@ -70,6 +73,8 @@ if __name__ == "__main__":
 
     if args.connect._here or args.accessibility._here:
         srv=pkg.SeleniumServer(accessibility=args.accessibility._here, debug=debug, direpa_media=direpa_media)
+
+        release_keys=[]
 
         try:
             cmd_pid=srv.windows.get_active()
@@ -142,9 +147,46 @@ if __name__ == "__main__":
                     srv.browser_focus()
                 pyautogui.hotkey('ctrl', 'shift', 'k')
 
-            for cmd_arg in args.connect._args:
+            accepted_keys=None
 
-                if cmd_arg._name == "scroll":
+            for cmd_arg in args.connect._args:
+                if cmd_arg._name == "key":
+                    if accepted_keys is None:
+                        accepted_keys=get_accepted_keys()
+
+                    if cmd_arg._value not in accepted_keys:
+                        pkg.msg.error("key '{}' not found in {}".format(cmd_arg._value, accepted_keys), exit=1)
+
+                    if cmd_arg.pause._value is not None:
+                        time.sleep(float(cmd_arg.pause._value)/1000)
+
+                    if cmd_arg.down._here:
+                        pyautogui.keyDown(cmd_arg._value)
+                        release_keys.append(cmd_arg._value)
+                    elif cmd_arg.up._here:
+                        pyautogui.keyUp(cmd_arg._value)
+                        if cmd_arg._value in release_keys:
+                            release_keys.remove(cmd_arg._value)
+                    else:
+                        pyautogui.press(cmd_arg._value)
+
+                elif cmd_arg._name == "keys":
+                    if accepted_keys is None:
+                        accepted_keys=get_accepted_keys()
+
+                    if cmd_arg.pause._value is not None:
+                        time.sleep(float(cmd_arg.pause._value)/1000)
+
+                    for key in cmd_arg._values:
+                        if key not in accepted_keys:
+                            pkg.msg.error("key '{}' not found in {}".format(key, accepted_keys), exit=1)
+
+                    pyautogui.hotkey(*cmd_arg._values)
+                elif cmd_arg._name == "write":
+                    if cmd_arg.pause._value is not None:
+                        time.sleep(float(cmd_arg.pause._value)/1000)
+                    pyautogui.write(cmd_arg._value)
+                elif cmd_arg._name == "scroll":
                     srv.get_driver().scroll(percent=cmd_arg._value, pause_ms=cmd_arg.pause._value)
                 elif cmd_arg._name == "scroll_to":
                     srv.get_driver().scroll_to(
@@ -202,6 +244,9 @@ if __name__ == "__main__":
         except:
             srv.windows.focus(cmd_pid)
             raise
+        finally:
+            for key in release_keys:
+                pyautogui.keyUp(key)
 
 
         # if args.clear_cache._here:
