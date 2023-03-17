@@ -70,134 +70,128 @@ if __name__ == "__main__":
 
     if args.connect._here or args.accessibility._here:
         srv=pkg.SeleniumServer(accessibility=args.accessibility._here, debug=debug, direpa_media=direpa_media)
-        cmd_pid=None
 
-        if args.connect.cmd._here:
+        try:
             cmd_pid=srv.windows.get_active()
 
-        if args.accessibility._here and args.connect.driver._value != "chrome":
-            print("To use accessibility plugin, please use chrome driver.")
-            sys.exit(1)
-        # if args.connect._here:
-        srv.connect(args.connect.driver._value, reset=args.connect.driver.reset._here)
-        # elif args.accessibility._here:
-            # print("Here")
-            # sys.exit()
-            # srv.connect("chrome", reset=args.reset._here)
-
-        if args.connect.focus._here:
-            srv.browser_focus()
-
-        if args.connect.url._here:
-            url_alias=args.connect.url.alias._value
-            if url_alias is None:
-                url_alias="hostname_url"
-
-            params=[]
-            for arg in args.connect.url.param._branches:
-                if arg._here is True:
-                    param=(arg._value, )
-                    if arg.value._here is True:
-                        param+=(arg.value._value,)
-                    params.append(param)
-
-            url=pkg.geturl(
-                args.connect.url._value,
-                alias=url_alias, 
-                direpa_project=args.connect.url.path_project._value,
-                hostname_path=args.connect.url.hostname._value,
-                params=params,
-            )
-
-            if args.connect.url.insecure._here:
-                if srv.get_driver().dy["name"] == "firefox":
-                    confirmCert=False
-                    try:
-                        srv.get_driver().get(url)
-                    except BaseException as e:
-                        if e.__class__.__name__ == "InsecureCertificateException":
-                            print("Override certificate Exception")
-                            confirmCert=True
-                        else:
-                            print(traceback.format_exc())
-
-                    if confirmCert is True:
-                        srv.get_driver().find_element(By.ID, "advancedButton").click()
-                        srv.get_driver().find_element(By.ID, "exceptionDialogButton").click()
-                elif srv.get_driver().dy["name"] == "chrome":
-                    srv.get_driver().get(url)
-                    advanced_button=srv.get_driver().get_elem(id="details-button", error=False, wait_ms=800)
-                    if advanced_button is not None:
-                        advanced_button.click()
-                        srv.get_driver().find_element(By.ID, "proceed-link").click()
-
-                    # print(advanced_button)
-                else:
-                    print("--insecure flag needs to be implemented for driver '{}'".format(srv.get_driver().dy["name"]))
-                    sys.exit(1)
-            else:
-                srv.get_driver().get(url)
-
-
-        if args.connect.refresh._here:
-            srv.refresh(wait_ms=args.connect.refresh.wait._value)
-
-        if args.connect.scroll._here:
-            srv.get_driver().scroll(percent=args.connect.scroll._value, wait_ms=args.connect.scroll.wait._value)
-
-        if args.connect.scroll_to._here:
-            srv.get_driver().scroll_to(element_id=args.connect.scroll_to._value, wait_ms=args.connect.scroll_to.wait._value)
-
-        for arg in args.connect.select._branches:
-            if arg._here is True:
-                if arg.wait._value is not None:
-                    time.sleep(float(arg.wait._value)/1000)
-                elem=srv.get_driver().get_elem(
-                    id=arg.id._value, 
-                    xpath=arg.xpath._value,
-                    xpath_context=arg.xpath.context._value
-                )
-                if arg.value._value is not None:
-                    elem.send_keys(arg.value._value)
-          
-        for arg in args.connect.click._branches:
-            if arg._here is True:
-                if arg.wait._value is not None:
-                    time.sleep(float(arg.wait._value)/1000)
-                elem=srv.get_driver().get_elem(
-                    id=arg.id._value, 
-                    xpath=arg.xpath._value,
-                    xpath_context=arg.xpath.context._value
-                )
-
-                if arg.file._here is True:
-                    elem.send_keys(arg.file._value)
-                else:
-                    elem.send_keys("")
-                    elem.click()
-
-        if args.connect.console._here:
-            if args.connect.focus._here is False:
-                srv.browser_focus()
-            pyautogui.hotkey('ctrl', 'shift', 'k')
-
-        if args.accessibility._here:
-            import pyautogui
-            # you have to take a screenshot of the button
-            extn = pyautogui.locateOnScreen(os.path.join(srv.driver_data["direpa_extensions"], "site_improve_button.png"))
-            offset=15
-            if extn is None:
-                print("Not Found button.png")
+            if args.accessibility._here and args.connect.driver._value != "chrome":
+                print("To use accessibility plugin, please use chrome driver.")
                 sys.exit(1)
-            time.sleep(.5)
-            pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
 
-        if args.driver_info._here:
-            pprint(srv.get_driver().dy)
+            srv.connect(args.connect.driver._value, reset=args.connect.driver.reset._here)
 
-        if args.connect.cmd._here:
+            if args.connect.focus._here:
+                srv.browser_focus()
+
+            if args.connect.url._here:
+                url_alias=args.connect.url.alias._value
+                if url_alias is None:
+                    url_alias="hostname_url"
+
+                params=[]
+                for arg in args.connect.url.param._branches:
+                    if arg._here is True:
+                        param=(arg._value, )
+                        if arg.value._here is True:
+                            param+=(arg.value._value,)
+                        params.append(param)
+
+                url=pkg.geturl(
+                    args.connect.url._value,
+                    alias=url_alias, 
+                    direpa_project=args.connect.url.path_project._value,
+                    hostname_path=args.connect.url.hostname._value,
+                    params=params,
+                )
+
+                if args.connect.url.insecure._here:
+                    if srv.get_driver().dy["name"] == "firefox":
+                        confirmCert=False
+                        try:
+                            srv.get_driver().get(url)
+                        except BaseException as e:
+                            if e.__class__.__name__ == "InsecureCertificateException":
+                                print("Override certificate Exception")
+                                confirmCert=True
+                            else:
+                                print(traceback.format_exc())
+
+                        if confirmCert is True:
+                            srv.get_driver().find_element(By.ID, "advancedButton").click()
+                            srv.get_driver().find_element(By.ID, "exceptionDialogButton").click()
+                    elif srv.get_driver().dy["name"] == "chrome":
+                        srv.get_driver().get(url)
+                        advanced_button=srv.get_driver().get_elem(id="details-button", error=False, wait_ms=800)
+                        if advanced_button is not None:
+                            advanced_button.click()
+                            srv.get_driver().find_element(By.ID, "proceed-link").click()
+
+                        # print(advanced_button)
+                    else:
+                        print("--insecure flag needs to be implemented for driver '{}'".format(srv.get_driver().dy["name"]))
+                        sys.exit(1)
+                else:
+                    srv.get_driver().get(url)
+
+
+            if args.connect.refresh._here:
+                srv.refresh(wait_ms=args.connect.refresh.wait._value)
+
+            if args.connect.console._here:
+                if args.connect.focus._here is False:
+                    srv.browser_focus()
+                pyautogui.hotkey('ctrl', 'shift', 'k')
+
+            for cmd_arg in args.connect._args:
+                if cmd_arg._name == "scroll":
+                    srv.get_driver().scroll(percent=cmd_arg._value, wait_ms=cmd_arg.wait._value)
+                elif cmd_arg._name == "scroll_to":
+                    srv.get_driver().scroll_to(element_id=cmd_arg._value, wait_ms=cmd_arg.wait._value)
+                elif cmd_arg._name == "select":
+                    if cmd_arg.wait._value is not None:
+                        time.sleep(float(cmd_arg.wait._value)/1000)
+                    elem=srv.get_driver().get_elem(
+                        id=cmd_arg.id._value, 
+                        xpath=cmd_arg.xpath._value,
+                        xpath_context=cmd_arg.xpath.context._value
+                    )
+                    if cmd_arg.value._value is not None:
+                        elem.send_keys(cmd_arg.value._value)
+                elif cmd_arg._name == "click":
+                    if cmd_arg.wait._value is not None:
+                        time.sleep(float(cmd_arg.wait._value)/1000)
+                    elem=srv.get_driver().get_elem(
+                        id=cmd_arg.id._value, 
+                        xpath=cmd_arg.xpath._value,
+                        xpath_context=cmd_arg.xpath.context._value
+                    )
+
+                    if cmd_arg.file._here is True:
+                        elem.send_keys(cmd_arg.file._value)
+                    else:
+                        elem.send_keys("")
+                        elem.click()            
+
+            if args.accessibility._here:
+                import pyautogui
+                # you have to take a screenshot of the button
+                extn = pyautogui.locateOnScreen(os.path.join(srv.driver_data["direpa_extensions"], "site_improve_button.png"))
+                offset=15
+                if extn is None:
+                    print("Not Found button.png")
+                    sys.exit(1)
+                time.sleep(.5)
+                pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
+
+            if args.driver_info._here:
+                pprint(srv.get_driver().dy)
+
+            if args.connect.cmd._here:
+                srv.windows.focus(cmd_pid)
+        except:
             srv.windows.focus(cmd_pid)
-           
+            raise
+
 
         # if args.clear_cache._here:
         #     driver=srv.get_driver()
