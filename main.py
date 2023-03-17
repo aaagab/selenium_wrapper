@@ -143,11 +143,21 @@ if __name__ == "__main__":
                 pyautogui.hotkey('ctrl', 'shift', 'k')
 
             for cmd_arg in args.connect._args:
+
                 if cmd_arg._name == "scroll":
-                    srv.get_driver().scroll(percent=cmd_arg._value, wait_ms=cmd_arg.wait._value)
+                    srv.get_driver().scroll(percent=cmd_arg._value, pause_ms=cmd_arg.pause._value)
                 elif cmd_arg._name == "scroll_to":
-                    srv.get_driver().scroll_to(element_id=cmd_arg._value, wait_ms=cmd_arg.wait._value)
+                    srv.get_driver().scroll_to(
+                        id=cmd_arg.id._value, 
+                        xpath=cmd_arg.xpath._value,
+                        xpath_context=cmd_arg.xpath.context._value,
+                        wait_ms=cmd_arg.wait._value,
+                        pause_ms=cmd_arg.pause._value,
+                    )                      
                 elif cmd_arg._name == "select":
+                    if cmd_arg.pause._value is not None:
+                        time.sleep(float(cmd_arg.pause._value)/1000)
+                    
                     elem=srv.get_driver().get_elem(
                         id=cmd_arg.id._value, 
                         xpath=cmd_arg.xpath._value,
@@ -157,6 +167,9 @@ if __name__ == "__main__":
                     if cmd_arg.value._value is not None:
                         elem.send_keys(cmd_arg.value._value)
                 elif cmd_arg._name == "click":
+                    if cmd_arg.pause._value is not None:
+                        time.sleep(float(cmd_arg.pause._value)/1000)
+                    
                     elem=srv.get_driver().get_elem(
                         id=cmd_arg.id._value, 
                         xpath=cmd_arg.xpath._value,
