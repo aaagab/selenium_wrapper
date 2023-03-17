@@ -148,22 +148,20 @@ if __name__ == "__main__":
                 elif cmd_arg._name == "scroll_to":
                     srv.get_driver().scroll_to(element_id=cmd_arg._value, wait_ms=cmd_arg.wait._value)
                 elif cmd_arg._name == "select":
-                    if cmd_arg.wait._value is not None:
-                        time.sleep(float(cmd_arg.wait._value)/1000)
                     elem=srv.get_driver().get_elem(
                         id=cmd_arg.id._value, 
                         xpath=cmd_arg.xpath._value,
-                        xpath_context=cmd_arg.xpath.context._value
+                        xpath_context=cmd_arg.xpath.context._value,
+                        wait_ms=cmd_arg.wait._value,
                     )
                     if cmd_arg.value._value is not None:
                         elem.send_keys(cmd_arg.value._value)
                 elif cmd_arg._name == "click":
-                    if cmd_arg.wait._value is not None:
-                        time.sleep(float(cmd_arg.wait._value)/1000)
                     elem=srv.get_driver().get_elem(
                         id=cmd_arg.id._value, 
                         xpath=cmd_arg.xpath._value,
-                        xpath_context=cmd_arg.xpath.context._value
+                        xpath_context=cmd_arg.xpath.context._value,
+                        wait_ms=cmd_arg.wait._value,
                     )
 
                     if cmd_arg.file._here is True:
