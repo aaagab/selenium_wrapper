@@ -211,6 +211,10 @@ class SeleniumServer():
     def get_elem(self, id=None, xpath=None, xpath_context=None, wait_ms=2000, error=True):
         return get_elem(self.get_driver(), id=id, xpath=xpath, xpath_context=xpath_context, wait_ms=wait_ms, error=error)
 
+    # def scroll(self, percent=None, pause_ms=None):
+    #     scroll(self.debug, self.get_driver(), percent=percent, pause_ms=pause_ms)
+
+
     def scroll(self, percent=None, pause_ms=None):
         scroll(self.debug, self.get_driver(), percent=percent, pause_ms=pause_ms)
 
