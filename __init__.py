@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # author: Gabriel Auger
-# version: "12.0.0"
+# version: "12.1.0"
 # name: release
 # license: MIT
 
-__version__= "12.0.0"
+__version__= "12.1.0"
 
 from .dev.obj_info import get_obj_info
 from .dev.server import SeleniumServer
 from .gpkgs.geturl import geturl
+from .gpkgs import message as msg
 from .gpkgs.nargs import Nargs
 from .gpkgs import shell_helpers as shell
 from .gpkgs.getpath import getpath 
