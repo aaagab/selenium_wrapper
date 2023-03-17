@@ -45,56 +45,56 @@ def get_elem(
                 return None
 
         element=None
-        if xpath is None:
-            try:
-                element=driver.find_element(By.ID, id)
-            except NoSuchElementException as e:
-                pass
-        else:
-            if len(xpath) >=2:
-                if xpath[0] == "'" and xpath[-1] == "'":
-                    xpath=xpath[1:len(xpath)-1]
-                    xpath=xpath.replace("\"", "\\\"")
+        try:
+            if xpath is None:
+                try:
+                    element=driver.find_element(By.ID, id)
+                except NoSuchElementException as e:
+                    pass
+            else:
+                if len(xpath) >=2:
+                    if xpath[0] == "'" and xpath[-1] == "'":
+                        xpath=xpath[1:len(xpath)-1]
+                        xpath=xpath.replace("\"", "\\\"")
 
-            try:
-                elems=driver.execute_script("""
-                    results=document.evaluate(\"{}\", {}, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-                    var elements = []; 
-                    var element= results.iterateNext(); 
-                    while (element) {{
-                        elements.push(element);
-                        element = results.iterateNext();
-                    }}
-                    return elements;
-                """.format(
-                    xpath,
-                    xpath_context,
-                ))
+                try:
+                    elems=driver.execute_script("""
+                        results=document.evaluate(\"{}\", {}, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+                        var elements = []; 
+                        var element= results.iterateNext(); 
+                        while (element) {{
+                            elements.push(element);
+                            element = results.iterateNext();
+                        }}
+                        return elements;
+                    """.format(
+                        xpath,
+                        xpath_context,
+                    ))
 
-                if len(elems) == 1:
-                    element=elems[0]
-                elif len(elems) > 0:
-                    msg.error("'{}' elements have been found but only one needs to be selected. (use xpath index notation)".format(len(elems)))
-                    index=1
-                    for elem in elems:
-                        print("    {}- tag={} text={}".format(
-                            index,
-                            elem.tag_name,
-                            elem.text,
-                        ))
-                        index+=1
-                    sys.exit(1)
+                    if len(elems) == 1:
+                        element=elems[0]
+                    elif len(elems) > 0:
+                        msg.error("'{}' elements have been found but only one needs to be selected. (use xpath index notation)".format(len(elems)))
+                        index=1
+                        for elem in elems:
+                            print("    {}- tag={} text={}".format(
+                                index,
+                                elem.tag_name,
+                                elem.text,
+                            ))
+                            index+=1
+                        sys.exit(1)
 
-            except JavascriptException:
-                msg.error("Wrong javascript syntax for xpath '{}' and context '{}'.".format(xpath, xpath_context))
-                raise
+                except JavascriptException:
+                    msg.error("Wrong javascript syntax for xpath '{}' and context '{}'.".format(xpath, xpath_context))
+                    raise
 
-        if element is not None:
-            try:
-                element.is_enabled() and element.is_displayed()
-                return element
-            except StaleElementReferenceException:
-                continue
+                if element is not None:
+                    element.is_enabled() and element.is_displayed()
+                    return element
+        except StaleElementReferenceException:
+            continue
 
     return None
 
