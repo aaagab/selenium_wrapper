@@ -77,6 +77,33 @@ args:
       "@":
         - args.connect.click.pause
 
+    key:
+      _info: key press with pyautogui
+      _label: KEY
+      _repeat: fork
+      _xor: down,up
+      "@": 
+        - args.connect.click.pause
+      down:
+        _info: key down with pyautogui
+      up:
+        _info: key up with pyautogui
+
+    keys:
+      _info: send hotkeys with pyautogui
+      _label: KEY
+      _repeat: fork
+      _values: +
+      "@": 
+        - args.connect.click.pause
+
+    write:
+      _info: write with pyautogui
+      _type: str
+      _repeat: fork
+      "@": 
+        - args.connect.click.pause
+
     scroll_to:
       _info: scroll to elem in browser page
       _repeat: fork
