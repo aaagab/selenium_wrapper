@@ -75,7 +75,7 @@ def get_elem(
                     if len(elems) == 1:
                         element=elems[0]
                     elif len(elems) > 0:
-                        msg.error("'{}' elements have been found but only one needs to be selected. (use xpath index notation)".format(len(elems)))
+                        msg.error("for xpath '{}': '{}' elements have been found but only one needs to be selected. (use xpath index notation)".format(xpath, len(elems)))
                         index=1
                         for elem in elems:
                             print("    {}- tag={} text={}".format(
