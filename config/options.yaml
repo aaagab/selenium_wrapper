@@ -97,6 +97,24 @@ args:
       "@": 
         - args.connect.click.pause
 
+    event:
+      _info: send javascript event to element
+      _repeat: fork
+      _xor: id,xpath
+      "@": 
+        - args.connect.click.id
+        - args.connect.click.xpath
+        - args.connect.click.wait
+        - args.connect.click.pause
+      name:
+        _required: true
+        _xor: mouseover,mousedown,mouseup,click
+        mouseover:
+        mousedown:
+        mouseup:
+        click:
+
+
     write:
       _info: write with pyautogui
       _type: str

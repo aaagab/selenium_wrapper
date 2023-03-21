@@ -195,7 +195,24 @@ if __name__ == "__main__":
                         xpath_context=cmd_arg.xpath.context._value,
                         wait_ms=cmd_arg.wait._value,
                         pause_ms=cmd_arg.pause._value,
-                    )                      
+                    ) 
+                elif cmd_arg._name == "event":
+                    event_str=None
+
+                    for event_arg in cmd_arg.name._args:
+                        event_str=event_arg._name
+
+                    if event_str is None:
+                        pkg.msg.error("Please choose an event name.", exit=1)
+
+                    srv.get_driver().send_js_event(
+                        event_str=event_str,
+                        id=cmd_arg.id._value, 
+                        xpath=cmd_arg.xpath._value,
+                        xpath_context=cmd_arg.xpath.context._value,
+                        wait_ms=cmd_arg.wait._value,
+                        pause_ms=cmd_arg.pause._value,
+                    )                    
                 elif cmd_arg._name == "select":
                     if cmd_arg.pause._value is not None:
                         time.sleep(float(cmd_arg.pause._value)/1000)
