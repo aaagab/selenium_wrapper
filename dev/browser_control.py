@@ -98,6 +98,38 @@ def get_elem(
 
     return None
 
+def send_js_event(
+    driver, 
+    event_str,
+    id=None,
+    xpath=None,
+    xpath_context=None,
+    wait_ms=None,
+    pause_ms=None
+):
+    if pause_ms is not None:
+        time.sleep(float(pause_ms)/1000)
+
+    element=get_elem(
+        driver=driver,
+        id=id,
+        xpath=xpath,
+        xpath_context=xpath_context,
+        wait_ms=wait_ms,
+    )
+
+    mouse_events=[
+        "mouseover",
+        "mousedown",
+        "mouseup",
+        "click",
+    ]
+
+    if (event_str) in mouse_events:
+        driver.execute_script("var clickEvent=document.createEvent('MouseEvents'); clickEvent.initEvent('{}', true, true); arguments[0].dispatchEvent(clickEvent);".format(event_str), element)
+    else:
+        raise NotImplementedError()
+
 def scroll_to(
     driver, 
     id=None,
