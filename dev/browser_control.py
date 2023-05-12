@@ -90,9 +90,9 @@ def get_elem(
                     msg.error("Wrong javascript syntax for xpath '{}' and context '{}'.".format(xpath, xpath_context))
                     raise
 
-                if element is not None:
-                    element.is_enabled() and element.is_displayed()
-                    return element
+            if element is not None:
+                element.is_enabled() and element.is_displayed()
+                return element
         except StaleElementReferenceException:
             continue
 
