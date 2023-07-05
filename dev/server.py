@@ -10,10 +10,11 @@ import sys
 import time
 import threading
 
-
+import selenium
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
+from .update_driver import update_chrome_driver
 from .drivers import get_drivers_data, get_driver_data, get_new_driver_session, close_driver, close_driver_browsers
 from .browser_control import get_elem, scroll, refresh, window_focus, browser_focus, scroll_to, send_js_event
 from .browser_window import get_root_browsers, get_selenium_browsers, get_browser_window
@@ -54,6 +55,7 @@ class SeleniumServer():
         self.filenpa_webdrivermanager=os.path.join(self.direpa_media, "webdrivermanager-4.0.0-fat.jar")
         self.direpa_logs=os.path.join(self.direpa_media, "logs")
         self.direpa_extensions=os.path.join(self.direpa_media, "extensions")
+        self.direpa_drivers=os.path.join(self.direpa_media, "drivers")
         self.filenpa_log=os.path.join(self.direpa_logs, "server.txt")
         self.filenpa_drivers_info=os.path.join(self.direpa_drivers, "info.txt")
 
@@ -175,7 +177,25 @@ class SeleniumServer():
             )
 
             if session is None:
-                self.driver = webdriver.Remote(self.grid_url, self.driver_data["capabilities"])
+                browser=self.driver_data["capabilities"]["browserName"]
+                try:
+                    self.driver = webdriver.Remote(self.grid_url, self.driver_data["capabilities"])
+                    if browser == "firefox":
+                        for elem in sorted(os.listdir(self.driver_data["direpa_extensions"])):
+                            path_rel, ext=os.path.splitext(elem)
+                            if ext == ".xpi":
+                                path_extension=os.path.join(self.driver_data["direpa_extensions"], elem)
+                                webdriver.Firefox.install_addon(self.driver, path_extension, temporary=True)
+
+                except selenium.common.exceptions.SessionNotCreatedException as e:
+                    if browser == "chrome":
+                        self.reset()
+                        os.system("taskkill /F /IM chromedriver.exe")
+                        update_chrome_driver(self.direpa_drivers)
+                        msg.success("Chrome driver updated. Please restart command.")
+                        sys.exit(1)
+                    else:
+                        raise
                 self.processes.init()
                 
                 self.driver_data["session"]=get_session(
