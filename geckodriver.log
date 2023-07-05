@@ -1,0 +1,26 @@
+1688569446337	geckodriver	INFO	Listening on 127.0.0.1:61384
+1688569449343	mozrunner::runner	INFO	Running command: "C:\\Users\\john\\AppData\\Local\\Mozilla Firefox\\firefox.exe" "--marionette" "--remote-debugging-port" "61385" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "C:\\Users\\john\\AppData\\Local\\Temp\\rust_mozprofilenRlY1h"
+console.warn: services.settings: Ignoring preference override of remote settings server
+console.warn: services.settings: Allow by setting MOZ_REMOTE_SETTINGS_DEVTOOLS=1 in the environment
+1688569450826	Marionette	INFO	Marionette enabled
+Dynamically enable window occlusion 0
+1688569450834	Marionette	INFO	Listening on port 61400
+console.error: Policies.jsm: 
+  OfferToSaveLoginsDefault ignored because OfferToSaveLogins is present.
+Read port: 61400
+WebDriver BiDi listening on ws://127.0.0.1:61385
+1688569451008	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+DevTools listening on ws://127.0.0.1:61385/devtools/browser/626c5342-faa1-462a-becc-fae12c552be9
+1688569506594	geckodriver	INFO	Listening on 127.0.0.1:61457
+1688569509598	mozrunner::runner	INFO	Running command: "C:\\Users\\john\\AppData\\Local\\Mozilla Firefox\\firefox.exe" "--marionette" "--remote-debugging-port" "61458" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "C:\\Users\\john\\AppData\\Local\\Temp\\rust_mozprofileGo9xFc"
+console.warn: services.settings: Ignoring preference override of remote settings server
+console.warn: services.settings: Allow by setting MOZ_REMOTE_SETTINGS_DEVTOOLS=1 in the environment
+1688569510030	Marionette	INFO	Marionette enabled
+Dynamically enable window occlusion 0
+1688569510036	Marionette	INFO	Listening on port 61468
+console.error: Policies.jsm: 
+  OfferToSaveLoginsDefault ignored because OfferToSaveLogins is present.
+Read port: 61468
+WebDriver BiDi listening on ws://127.0.0.1:61458
+1688569510203	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+DevTools listening on ws://127.0.0.1:61458/devtools/browser/f0ea32d5-90ce-4db5-9efa-56dbb70f2d70

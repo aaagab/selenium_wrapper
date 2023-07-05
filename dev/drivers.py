@@ -103,13 +103,15 @@ def get_drivers_data(
             filenpa_log=driver["filenpa_log"],    
         ).splitlines()
 
-        # pprint(vars(DesiredCapabilities))
-        # sys.exit()
         driver["capabilities"]=getattr(DesiredCapabilities, capability_name)
 
-        if name == "chrome" and accessibility is True:
+        if name == "chrome":
             chrome_options=ChromeOptions()
-            chrome_options.add_extension(os.path.join(driver["direpa_extensions"], "site_improve_2022.7.18.484_0.crx"))
+            for elem in sorted(os.listdir(driver["direpa_extensions"])):
+                path_rel, ext=os.path.splitext(elem)
+                if ext == ".crx":
+                    path_extension=os.path.join(driver["direpa_extensions"], elem)
+                    chrome_options.add_extension(path_extension)
             driver["capabilities"]=chrome_options.to_capabilities()
         elif name == "iexplorer":
             # solve issue:  Protected Mode settings are not the same for all zones.
@@ -122,26 +124,14 @@ def get_drivers_data(
             options = webdriver.FirefoxOptions()
             fp = webdriver.FirefoxProfile()
             fp.set_preference("marionette.actors.enabled", True)
+            driver["profile"]=fp
             options.profile=fp
-            # options.binary= FirefoxBinary(r'C:\Program Files (x86)\Mozilla Firefox\Firefox.exe')
-            # options.binary= FirefoxBinary(r"C:\Users\me\fty\etc\selenium_media\firefox_versions\target\firefox\firefox.exe")
-            # options.binary= FirefoxBinary(r"C:\Users\me\fty\etc\selenium_media\firefox_versions\firefox-81.0\firefox\firefox.exe")
-            # options.binary= FirefoxBinary(r"C:\Users\me\fty\etc\selenium_media\firefox_versions\firefox-82.0\firefox\firefox.exe")
             options.set_capability("marionette", True)
             # https://firefox-source-docs.mozilla.org/testing/geckodriver/TraceLogs.html
             options.log.level = "trace"
             options.add_argument("-devtools")
             driver["capabilities"]=options.to_capabilities()
-            # options.headless = True
-            #     if 'headless' in os.environ and os.environ['headless'] == '1':
-            #         options.headless = True
-            #     driver["capabilities"]=options.to_capabilities()
 
-            # fp.set_preference("browser.download.folderList", 2) # 0 means to download to the desktop, 1 means to download to the default "Downloads" directory, 2 means to use the directory 
-            # fp.set_preference("browser.helperApps.alwaysAsk.force", False)
-            # fp.set_preference("browser.download.manager.showWhenStarting",False)
-            # fp.set_preference("browser.download.dir", "H:\Downloads") 
-        # elif name == "msedge":
         elif name == "edge":
             options = webdriver.EdgeOptions()
             options.use_chromium = True
