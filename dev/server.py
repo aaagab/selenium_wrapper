@@ -353,7 +353,7 @@ class SeleniumServer():
                 driver_name=driver_data["name"],
                 driver_proc_name=driver_data["driver_proc_name"],
             )
-            open(driver_data["filenpa_server_log"], "w").close()
+            open(driver_data["filenpa_log"], "w").close()
         
         close_sessions(
             debug=self.debug,
