@@ -24,7 +24,7 @@ def get_driver_data(driver_names, drivers_data, name):
     return drivers_data[name]
 
 def get_drivers_data(
-    accessibility=False,
+    load_extensions=False,
     direpa_drivers=None,
     direpa_extensions=None,
     direpa_logs=None,
@@ -107,11 +107,12 @@ def get_drivers_data(
 
         if name == "chrome":
             chrome_options=ChromeOptions()
-            for elem in sorted(os.listdir(driver["direpa_extensions"])):
-                path_rel, ext=os.path.splitext(elem)
-                if ext == ".crx":
-                    path_extension=os.path.join(driver["direpa_extensions"], elem)
-                    chrome_options.add_extension(path_extension)
+            if load_extensions is True:
+                for elem in sorted(os.listdir(driver["direpa_extensions"])):
+                    path_rel, ext=os.path.splitext(elem)
+                    if ext == ".crx":
+                        path_extension=os.path.join(driver["direpa_extensions"], elem)
+                        chrome_options.add_extension(path_extension)
             driver["capabilities"]=chrome_options.to_capabilities()
         elif name == "iexplorer":
             # solve issue:  Protected Mode settings are not the same for all zones.

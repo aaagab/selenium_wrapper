@@ -31,11 +31,12 @@ from .windows import Windows
 class SeleniumServer():
     def __init__(
         self, 
-        accessibility=False,
+        load_extensions=False,
         debug=False,
         direpa_media=None,
     ):
         self.debug=debug
+        self.load_extensions=load_extensions
         self.processes=Processes(debug=self.debug)
         self.driver_data=None
         self.driver=None
@@ -71,7 +72,7 @@ class SeleniumServer():
         ]
 
         self.drivers_data=get_drivers_data(
-            accessibility=accessibility,
+            load_extensions=load_extensions,
             direpa_drivers=self.direpa_drivers,
             direpa_extensions=self.direpa_extensions,
             direpa_logs=self.direpa_logs,
@@ -180,12 +181,13 @@ class SeleniumServer():
                 browser=self.driver_data["capabilities"]["browserName"]
                 try:
                     self.driver = webdriver.Remote(self.grid_url, self.driver_data["capabilities"])
-                    if browser == "firefox":
-                        for elem in sorted(os.listdir(self.driver_data["direpa_extensions"])):
-                            path_rel, ext=os.path.splitext(elem)
-                            if ext == ".xpi":
-                                path_extension=os.path.join(self.driver_data["direpa_extensions"], elem)
-                                webdriver.Firefox.install_addon(self.driver, path_extension, temporary=True)
+                    if self.load_extensions is True:
+                        if browser == "firefox":
+                            for elem in sorted(os.listdir(self.driver_data["direpa_extensions"])):
+                                path_rel, ext=os.path.splitext(elem)
+                                if ext == ".xpi":
+                                    path_extension=os.path.join(self.driver_data["direpa_extensions"], elem)
+                                    webdriver.Firefox.install_addon(self.driver, path_extension, temporary=True)
 
                 except selenium.common.exceptions.SessionNotCreatedException as e:
                     if browser == "chrome":
