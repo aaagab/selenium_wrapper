@@ -42,10 +42,9 @@ if __name__ == "__main__":
     ).get_args()
 
     debug=args.debug._here
-    direpa_media=os.path.join(os.path.expanduser("~"), "fty", "etc", "selenium_media")
 
     if args.selenium_options._here:
-        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
+        srv=pkg.SeleniumServer(debug=debug)
         print()
         print("## Standalone")
         cmd=[ srv.filenpa_java, "-jar", srv.filenpa_selenium_server, "-help" ]
@@ -60,19 +59,19 @@ if __name__ == "__main__":
         subprocess.run(cmd)
         sys.exit(0)
     elif args.gui._here:
-        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
+        srv=pkg.SeleniumServer(debug=debug)
         srv.show_gui()
         sys.exit(0)
     elif args.exit._here:
-        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
+        srv=pkg.SeleniumServer(debug=debug)
         srv.reset()
         sys.exit(0)
     elif args.reset._here:
-        srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
+        srv=pkg.SeleniumServer(debug=debug)
         srv.reset(args.drivers._values)
 
     if args.connect._here:
-        srv=pkg.SeleniumServer(load_extensions=args.connect.extensions._here, debug=debug, direpa_media=direpa_media)
+        srv=pkg.SeleniumServer(load_extensions=args.connect.extensions._here, debug=debug)
 
         release_keys=[]
 
