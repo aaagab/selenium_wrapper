@@ -24,42 +24,101 @@ from .sessions import set_sessions, close_sessions, get_session, get_browser_pid
 from ..gpkgs import shell_helpers as shell
 from ..gpkgs import message as msg
 from ..gpkgs.timeout import TimeOut
+from ..gpkgs.etconf import Etconf
 
 from .windows import Windows
 
+class SeleniumSettings():
+    def __init__(
+        self,
+        direpa_drivers=None,
+        direpa_extensions=None,
+        direpa_logs=None,
+        filenpa_java=None,
+        filenpa_selenium_server=None,
+        filenpa_server_log=None,
+    ):
+        self.direpa_drivers=direpa_drivers
+        self.direpa_extensions=direpa_extensions
+        self.direpa_logs=direpa_logs
+        self.filenpa_java=filenpa_java
+        self.filenpa_selenium_server=filenpa_selenium_server
+        self.filenpa_server_log=filenpa_server_log
+
+    def set(self, dy_settings: dict):
+        if dy_settings.get("direpa_drivers") is not None:
+            self.direpa_drivers=dy_settings["direpa_drivers"]
+        if dy_settings.get("direpa_extensions") is not None:
+            self.direpa_extensions=dy_settings["direpa_extensions"]
+        if dy_settings.get("direpa_logs") is not None:
+            self.direpa_logs=dy_settings["direpa_logs"]
+        if dy_settings.get("filenpa_java") is not None:
+            self.filenpa_java=dy_settings["filenpa_java"]
+        if dy_settings.get("filenpa_selenium_server") is not None:
+            self.filenpa_selenium_server=dy_settings["filenpa_selenium_server"]
+        if dy_settings.get("filenpa_server_log") is not None:
+            self.filenpa_server_log=dy_settings["filenpa_server_log"]
+
+    def validate(self):
+        if self.direpa_drivers is None:
+            raise "settings 'direpa_drivers' must be provided"
+        if self.direpa_extensions is None:
+            raise "settings 'direpa_extensions' must be provided"
+        if self.direpa_logs is None:
+            raise "settings 'direpa_logs' must be provided"
+        if self.filenpa_java is None:
+            raise "settings 'filenpa_java' must be provided"
+        if self.filenpa_selenium_server is None:
+            raise "settings 'filenpa_selenium_server' must be provided"
+        if self.filenpa_server_log is None:
+            raise "settings 'filenpa_server_log' must be provided"
 
 class SeleniumServer():
     def __init__(
         self, 
         load_extensions=False,
+        settings: SeleniumSettings = None,
         debug=False,
-        direpa_media=None,
     ):
+
+        def seed(pkg_major, direpas_configuration=dict(), fun_auto_migrate=None):
+            fun_auto_migrate()
+
+        filenpa_gpm=os.path.join(os.path.dirname(os.path.dirname(os.path.relpath(__file__))), "gpm.json")
+        etconf=Etconf(
+            filenpa_gpm=filenpa_gpm,
+            enable_dev_conf=False, 
+            tree=dict(), 
+            seed=seed, 
+        )
+
+        if settings is None:
+            filenpa_settings=os.path.join(etconf.direpa_configuration, "settings.json")
+            settings=SeleniumSettings()
+            dy_settings=dict()
+            with open(filenpa_settings, "r") as f:
+                dy_settings=json.load(f)
+            settings.set(dy_settings)
+
+        settings.validate()
+
         self.debug=debug
         self.load_extensions=load_extensions
         self.processes=Processes(debug=self.debug)
         self.driver_data=None
         self.driver=None
-        if direpa_media is None:
-            msg.error("direpa_media needs to be provided")
-            sys.exit(1)
-        self.direpa_media=direpa_media
-        self.direpa_drivers=os.path.join(self.direpa_media, "drivers")
-        self.filenpa_java=r"C:\Program Files\Java\jre1.8.0_251\bin\java"
-        self.filenpa_java=r"C:\Program Files (x86)\Common Files\Oracle\Java\javapath\java.exe"
-        self.filenpa_java=r"C:\Users\john\fty\etc\selenium_media\java\bin\java.exe"
+
+        self.direpa_drivers=settings.direpa_drivers
+        self.direpa_extensions=settings.direpa_extensions
+        self.direpa_logs=settings.direpa_logs
+        self.filenpa_java=settings.filenpa_java
+        self.filenpa_selenium_server=settings.filenpa_selenium_server
+        self.filenpa_server_log=settings.filenpa_server_log
+
         self.host="127.0.0.1"
         self.port="4444"
         self.grid_url = "http://127.0.0.1:{}/wd/hub".format(self.port)
         self.grid_url_pid=None
-        self.filenpa_selenium_server=os.path.join(self.direpa_media, "selenium-server-standalone-3.141.59.jar")
-        self.filenpa_webdrivermanager=os.path.join(self.direpa_media, "webdrivermanager-4.0.0-fat.jar")
-        self.direpa_logs=os.path.join(self.direpa_media, "logs")
-        self.direpa_extensions=os.path.join(self.direpa_media, "extensions")
-        self.direpa_drivers=os.path.join(self.direpa_media, "drivers")
-        self.filenpa_log=os.path.join(self.direpa_logs, "server.txt")
-        self.filenpa_drivers_info=os.path.join(self.direpa_drivers, "info.txt")
-
 
         self.driver_names=[
             "chrome",
@@ -105,7 +164,7 @@ class SeleniumServer():
                 "-jar",
                 self.filenpa_selenium_server,
                 "-log",
-                self.filenpa_log,
+                self.filenpa_server_log,
                 "-timeout",
                 "252000", # 70 hours before the session timeout
                 "-host",
@@ -294,7 +353,7 @@ class SeleniumServer():
                 driver_name=driver_data["name"],
                 driver_proc_name=driver_data["driver_proc_name"],
             )
-            open(driver_data["filenpa_log"], "w").close()
+            open(driver_data["filenpa_server_log"], "w").close()
         
         close_sessions(
             debug=self.debug,
@@ -302,7 +361,7 @@ class SeleniumServer():
             grid_url_pid=self.grid_url_pid,
         )
         
-        open(self.filenpa_log, "w").close()
+        open(self.filenpa_server_log, "w").close()
 
         if self.get_grid_url_pid() is not None:
             self.processes.kill(self.get_grid_url_pid())
