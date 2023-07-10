@@ -7,9 +7,7 @@ args:
     selenium_wrapper --connect --driver firefox --url events/create --select 'frmEventDescription' --delay 1000
     main.py --connect --driver firefox --focus --url request/new --console --delay 1000 --click input-organization-chart --file _tests/files/file2.txt
     main.py --connect --driver firefox --focus --url request/new --console --delay 1000 --files "{'input-organization-chart': '_tests/files/file2.txt'}"
-  accessibility:
-    _aliases: --accessibility,-a
-    _info: it loads site improve addons and click the addons buttons
+
   clear_cache:
     _show: false
 
@@ -54,6 +52,12 @@ args:
       _label: DRIVER_NAME
       _required: true
       reset:
+
+    extensions:
+      _info: when present extensions present in selenium media folder are loaded automatically
+      accessibility:
+        _aliases: --accessibility,-a
+        _info: it clicks the addons buttons
 
     focus:
       _info: focus browser window. This action works partially on iexplorer or edge, those

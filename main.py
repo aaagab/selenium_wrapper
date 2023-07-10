@@ -71,15 +71,15 @@ if __name__ == "__main__":
         srv=pkg.SeleniumServer(debug=debug, direpa_media=direpa_media)
         srv.reset(args.drivers._values)
 
-    if args.connect._here or args.accessibility._here:
-        srv=pkg.SeleniumServer(accessibility=args.accessibility._here, debug=debug, direpa_media=direpa_media)
+    if args.connect._here:
+        srv=pkg.SeleniumServer(load_extensions=args.connect.extensions._here, debug=debug, direpa_media=direpa_media)
 
         release_keys=[]
 
         try:
             cmd_pid=srv.windows.get_active()
 
-            if args.accessibility._here and args.connect.driver._value != "chrome":
+            if args.connect.extensions.accessibility._here and args.connect.driver._value != "chrome":
                 print("To use accessibility plugin, please use chrome driver.")
                 sys.exit(1)
 
@@ -242,7 +242,7 @@ if __name__ == "__main__":
                         elem.send_keys("")
                         elem.click()            
 
-            if args.accessibility._here:
+            if args.connect.extensions.accessibility._here:
                 import pyautogui
                 # you have to take a screenshot of the button
                 extn = pyautogui.locateOnScreen(os.path.join(srv.driver_data["direpa_extensions"], "site_improve_button.png"))
