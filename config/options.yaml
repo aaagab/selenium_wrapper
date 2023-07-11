@@ -34,9 +34,11 @@ args:
       wait:
         _info: time to wait before giving-up searching the element
         _label: MILLISECONDS
+        _type: int
       pause:
         _info: pause in milliseconds before executing the action
         _label: MILLISECONDS
+        _type: int
       file:
         _info: Click input element requires a file
         _values: '1'
@@ -72,6 +74,7 @@ args:
       wait:
         _values: '?'
         _label: MILLISECONDS
+        _type: int
     scroll:
       _aliases: --scroll,-s
       _info: scroll browser page. Default go bottom
