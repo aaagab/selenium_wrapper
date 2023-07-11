@@ -14,6 +14,10 @@ from selenium.common.exceptions import NoSuchElementException, JavascriptExcepti
 from ..gpkgs.timeout import TimeOut
 from ..gpkgs import message as msg
 
+class ElementNotFound(Exception):
+    pass
+
+
 def get_elem(
     driver, 
     id=None,
@@ -37,10 +41,9 @@ def get_elem(
         if timer.has_ended(pause=.001):
             if error is True:
                 if id is None:
-                    msg.error("element not found with xpath '{}'".format(xpath))
+                    raise ElementNotFound("element not found with xpath '{}'".format(xpath))
                 else:
-                    msg.error("element not found with id '{}'".format(id))
-                sys.exit(1)
+                    raise ElementNotFound("element not found with id '{}'".format(id))
             else:
                 return None
 
@@ -72,7 +75,9 @@ def get_elem(
                         xpath_context,
                     ))
 
-                    if len(elems) == 1:
+                    if elems is None:
+                        continue
+                    elif len(elems) == 1:
                         element=elems[0]
                     elif len(elems) > 0:
                         msg.error("for xpath '{}': '{}' elements have been found but only one needs to be selected. (use xpath index notation)".format(xpath, len(elems)))
