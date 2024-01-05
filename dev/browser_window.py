@@ -7,6 +7,8 @@ import shlex
 import subprocess
 import sys
 
+from ..gpkgs import message as msg
+
 
 def get_root_browsers(
     debug=False,
@@ -73,7 +75,8 @@ def get_selenium_browsers(
                         selenium_browsers.append(browser)
         else:
             parent_first=browser["node"].parent
-            if parent_first.dy["name"] in [driver_filen_exe, "unknown"]: # selenium browser
-                selenium_browsers.append(browser)
+            if parent_first is not None:
+                if parent_first.dy["name"] in [driver_filen_exe, "unknown"]: # selenium browser
+                    selenium_browsers.append(browser)
 
     return selenium_browsers
