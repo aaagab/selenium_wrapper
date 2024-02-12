@@ -146,6 +146,9 @@ if __name__ == "__main__":
                     srv.browser_focus()
                 pyautogui.hotkey('ctrl', 'shift', 'k')
 
+                if args.connect.focus._here is False:
+                    srv.windows.focus(cmd_pid)
+
             accepted_keys=None
 
             for cmd_arg in args.connect._args:
