@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # author: Gabriel Auger
-# version: "13.1.3"
+# version: "13.1.4"
 # name: release
 # license: MIT
 
-__version__= "13.1.3"
+__version__= "13.1.4"
 
 from .dev.obj_info import get_obj_info
 from .dev.server import SeleniumServer, SeleniumSettings
