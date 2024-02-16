@@ -47,6 +47,7 @@ args:
       _info: During development of selenium wrapper keep command line on top
     console:
       _info: open browser console
+
     driver:
       _aliases: --driver,-d
       _default: "firefox"
@@ -64,6 +65,13 @@ args:
     focus:
       _info: focus browser window. This action works partially on iexplorer or edge, those
         browser needs not to be minimized in order to operate.
+
+    logs:
+      _info: print browser console logs to output
+      wait:
+        _info: time to wait before fetching browser console logs
+        _label: MILLISECONDS
+        _type: int
 
     page:
       _info: this function needs that the current project have a file named hostname_url.txt
