@@ -9,7 +9,7 @@ import sys
 import time
 
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, JavascriptException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException, JavascriptException, StaleElementReferenceException, ElementNotInteractableException
 
 from ..gpkgs.timeout import TimeOut
 from ..gpkgs import message as msg
@@ -17,6 +17,19 @@ from ..gpkgs import message as msg
 class ElementNotFound(Exception):
     pass
 
+
+def send_keys(elem, value):
+    wait_ms=5000
+    timer=TimeOut(wait_ms, unit="milliseconds").start()
+    while True:
+        try:
+            elem.send_keys(value)
+            break
+        except ElementNotInteractableException:
+            pass
+
+        if timer.has_ended(pause=.001):
+            break
 
 def get_elem(
     driver, 
