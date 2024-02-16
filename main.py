@@ -260,6 +260,17 @@ if __name__ == "__main__":
 
             if args.connect.cmd._here:
                 srv.windows.focus(cmd_pid)
+
+            if args.connect.logs._here:
+                if srv.get_driver().dy["name"] == "chrome":
+                    wait_ms=args.connect.logs.wait._value
+                    if wait_ms is not None:
+                        time.sleep(float(wait_ms)/1000)
+                    for entry in srv.get_driver().get_log('browser'):
+                        print(json.dumps(entry))
+                else:
+                    pkg.msg.error(f"--logs is not implemented for driver '{srv.get_driver().dy['name']}'", exit=1)
+                
         except:
             srv.windows.focus(cmd_pid)
             raise
