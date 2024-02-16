@@ -226,7 +226,7 @@ if __name__ == "__main__":
                         wait_ms=cmd_arg.wait._value,
                     )
                     if cmd_arg.value._value is not None:
-                        elem.send_keys(cmd_arg.value._value)
+                        pkg.send_keys(elem, cmd_arg.value._value)
                 elif cmd_arg._name == "click":
                     if cmd_arg.pause._value is not None:
                         time.sleep(float(cmd_arg.pause._value)/1000)
@@ -239,9 +239,9 @@ if __name__ == "__main__":
                     )
 
                     if cmd_arg.file._here is True:
-                        elem.send_keys(cmd_arg.file._value)
+                        pkg.send_keys(elem, cmd_arg.file._value)
                     else:
-                        elem.send_keys("")
+                        pkg.send_keys(elem, "")
                         elem.click()            
 
             if args.connect.extensions.accessibility._here:
