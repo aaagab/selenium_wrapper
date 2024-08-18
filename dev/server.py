@@ -26,7 +26,8 @@ from ..gpkgs import message as msg
 from ..gpkgs.timeout import TimeOut
 from ..gpkgs.etconf import Etconf
 
-from .windows import Windows
+if os.name == "nt":
+    from .windows import Windows
 
 class SeleniumSettings():
     def __init__(
