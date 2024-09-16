@@ -1,24 +1,17 @@
 #!/usr/bin/env python3
-from pprint import pprint
-import json
-import os
-import re
-import shlex
-import subprocess
 import sys
-import time
 
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, JavascriptException, StaleElementReferenceException, ElementNotInteractableException
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.common.exceptions import ElementNotInteractableException
+
+from .windows import Windows
+from .processes import Processes, Proc
 
 from ..gpkgs.timeout import TimeOut
 from ..gpkgs import message as msg
 
-class ElementNotFound(Exception):
-    pass
 
-
-def send_keys(elem, value):
+def send_keys(elem:WebElement, value:str):
     wait_ms=5000
     timer=TimeOut(wait_ms, unit="milliseconds").start()
     while True:
@@ -31,174 +24,21 @@ def send_keys(elem, value):
         if timer.has_ended(pause=.001):
             break
 
-def get_elem(
-    driver, 
-    id=None,
-    xpath=None, 
-    xpath_context=None,
-    wait_ms=None,
-    error=True
-):
-    if wait_ms is None:
-        wait_ms=2000
+def window_focus(processes_obj:Processes, exe_name:str, debug:bool):
+    windows_obj=Windows(debug=debug)
+    dy_procs:dict[float, list[Proc]]=dict()
 
-    timer=TimeOut(wait_ms, unit="milliseconds").start()
+    for p in processes_obj.from_name(name=exe_name):
+        tmptime=p.psproc.create_time()
+        if tmptime not in dy_procs:
+            dy_procs[tmptime]=[]
+        dy_procs[tmptime].append(p)
 
-    if id is None and xpath is None:
-        msg.error("When finding an element, at id or xpath must be provided", trace=True, exit=1)
-
-    if xpath_context is None:
-        xpath_context="document"
-
-    while True:
-        if timer.has_ended(pause=.001):
-            if error is True:
-                if id is None:
-                    raise ElementNotFound("element not found with xpath '{}'".format(xpath))
-                else:
-                    raise ElementNotFound("element not found with id '{}'".format(id))
-            else:
-                return None
-
-        element=None
-        try:
-            if xpath is None:
-                try:
-                    element=driver.find_element(By.ID, id)
-                except NoSuchElementException as e:
-                    pass
-            else:
-                if len(xpath) >=2:
-                    if xpath[0] == "'" and xpath[-1] == "'":
-                        xpath=xpath[1:len(xpath)-1]
-                        xpath=xpath.replace("\"", "\\\"")
-
-                try:
-                    elems=driver.execute_script("""
-                        results=document.evaluate(\"{}\", {}, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-                        var elements = []; 
-                        var element= results.iterateNext(); 
-                        while (element) {{
-                            elements.push(element);
-                            element = results.iterateNext();
-                        }}
-                        return elements;
-                    """.format(
-                        xpath,
-                        xpath_context,
-                    ))
-
-                    if elems is None:
-                        continue
-                    elif len(elems) == 1:
-                        element=elems[0]
-                    elif len(elems) > 0:
-                        msg.error("for xpath '{}': '{}' elements have been found but only one needs to be selected. (use xpath index notation)".format(xpath, len(elems)))
-                        index=1
-                        for elem in elems:
-                            print("    {}- tag={} text={}".format(
-                                index,
-                                elem.tag_name,
-                                elem.text,
-                            ))
-                            index+=1
-                        sys.exit(1)
-
-                except JavascriptException:
-                    msg.error("Wrong javascript syntax for xpath '{}' and context '{}'.".format(xpath, xpath_context))
-                    raise
-
-            if element is not None:
-                element.is_enabled() and element.is_displayed()
-                return element
-        except StaleElementReferenceException:
-            continue
-
-    return None
-
-def send_js_event(
-    driver, 
-    event_str,
-    id=None,
-    xpath=None,
-    xpath_context=None,
-    wait_ms=None,
-    pause_ms=None
-):
-    if pause_ms is not None:
-        time.sleep(float(pause_ms)/1000)
-
-    element=get_elem(
-        driver=driver,
-        id=id,
-        xpath=xpath,
-        xpath_context=xpath_context,
-        wait_ms=wait_ms,
-    )
-
-    mouse_events=[
-        "mouseover",
-        "mousedown",
-        "mouseup",
-        "click",
-    ]
-
-    if (event_str) in mouse_events:
-        driver.execute_script("var clickEvent=document.createEvent('MouseEvents'); clickEvent.initEvent('{}', true, true); arguments[0].dispatchEvent(clickEvent);".format(event_str), element)
-    else:
-        raise NotImplementedError()
-
-def scroll_to(
-    driver, 
-    id=None,
-    xpath=None,
-    xpath_context=None,
-    wait_ms=None,
-    pause_ms=None
-):
-    if pause_ms is not None:
-        time.sleep(float(pause_ms)/1000)
-
-    element=get_elem(
-        driver=driver,
-        id=id,
-        xpath=xpath,
-        xpath_context=xpath_context,
-        wait_ms=wait_ms,
-    )
-
-    driver.execute_script("arguments[0].scrollIntoView(true);", element)
-
-def scroll(debug, driver, percent=None, pause_ms=None):
-    from selenium.webdriver.common.keys import Keys
-    if pause_ms is not None:
-        time.sleep(float(pause_ms)/1000)
-
-    if percent is None:
-        percent=100
-    else:
-        percent=int(percent)
-    scroll_height=int(driver.execute_script("return document.documentElement.scrollHeight"))
-
-    if debug is True:
-        print("scroll page height: {}".format(scroll_height))
-    if percent < 100:
-        scroll_height=int(scroll_height*((percent/100)))
-    driver.execute_script("window.scrollTo(0,{})".format(scroll_height))
-
-def refresh(driver, wait_ms=None):
-    driver.refresh()
-    if wait_ms is not None:
-        time.sleep(float(wait_ms)/1000)
-
-def window_focus(processes_obj, windows_obj, exe_name):
-    if not exe_name in processes_obj.procs_by_name:
+    if len(dy_procs) == 0:
         msg.error("Process not found '{}'".format(exe_name))
         sys.exit(1)
-    pid=processes_obj.procs_by_name[exe_name][0]["pid"]
-    windows_obj.focus(pid)
 
-def browser_focus(driver, windows_obj):
-    pid=driver.dy["browser_pid"]
-    # pid=5300
-    windows_obj.focus(pid)
+    for tmptime in sorted(dy_procs, reverse=True):
+        pid=dy_procs[tmptime][-1].pid
+        windows_obj.focus(pid)
+        break

@@ -1,429 +1,318 @@
 #!/usr/bin/env python3
 from copy import deepcopy
-import json
+from enum import Enum
 from pprint import pprint, pformat
-import re
+import json
 import os
-import shlex
-import subprocess
-import sys
+import psutil
+from psutil import Process
 
-from ..gpkgs import shell_helpers as shell
+class ReportOption(str, Enum):
+    INDENT = 1
+    PID = 2
+    PPID = 3
+    NAME = 4
+    PROC = 5
+    TCPCONNS = 6
 
-#  wmic process get Caption,ParentProcessId,ProcessId
-class Node():
-    # def __init__(self, dy=None, parent=None, netstat_pids=None):
-    def __init__(self, dy=None, parent=None):
-        self.parent=parent
-        self.is_leaf=True
-        self.nodes=[]
-        self.dy=dy
-        self.parents=[]
-        # self.alldescendants=[]
-        # self.tree={ self: dict() }
+class TcpConn():
+    # sconn(fd=-1, family=<AddressFamily.AF_INET6: 10>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='::1', port=25), raddr=(), status='LISTEN', pid=None)
+    def __init__(self,
+        ip_local:str,
+        port_local:int,
+        ip_remote:str|None,
+        port_remote:int|None,
+        pid:int|None,
+        status:str,
+    ) -> None:
+        self.ip_local=ip_local
+        self.port_local=port_local
+        self.ip_remote=ip_remote
+        self.port_remote=port_remote
+        self.pid=pid
+        self.status=status
 
-        # self.dy["netstat"] = dict()
-        # if self.dy["pid"] in netstat_pids:
-            # self.dy["netstat"]=netstat_pids[self.dy["pid"]]
+    def to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__)
 
-        if self.parent is None:
-            self.root=self
-            self.is_root=True
-            self.level=1
-            self.count=1
-        else:
-            self.root=self.parent.root
-            self.root.count+=1
-            self.is_root=False
-            self.parent.is_leaf=False
-            self.level=self.parent.level+1
-            self.parent.nodes.append(self)
-            if self.parent.parents:
-                self.parents.extend(self.parent.parents)
+class Proc():
+    def __init__(self,
+        name:str,
+        pid:int,
+        ppid:int,
+        tcp_conns:list[TcpConn],
+        psproc:Process,
+    ) -> None:
+        self.name=name
+        self.pid=pid
+        self.ppid=ppid
+        self.tcp_conns=tcp_conns
+        self._obj=deepcopy(self)
+        self.parent:Proc|None=None
+        self.children:list[Proc]=[]
+        self.psproc=psproc
 
-            self.parents.append(parent)
-            # self.parent.tree[self.parent].update(self.tree)
+    def to_json(self):
+        return json.dumps(self._obj, default=lambda o: o.__dict__)
 
-            # tmp_parent=self.parent
-            # while True:
-            #     tmp_parent.alldescendants.append(self)
-            #     if tmp_parent.parent is None:
-            #         break
-            #     else:
-            #         tmp_parent=tmp_parent.parent
+class ProcInfo():
+    def __init__(self,
+        proc:Proc,
+        level:int,
+        parents:list[Proc],
+        root:Proc|None,
+    )-> None:
+        self.proc=proc
+        self.level=level
+        self.parents=parents
+        self.root=root
+
+def get_tcp_connections(conn_kind:str="inet", debug:bool=False) -> list[TcpConn]:
+    tcp_conns:list[TcpConn]=[]
+    for conn in psutil.net_connections(kind=conn_kind):
+        ip_local:str=conn.laddr.ip #type:ignore
+        port_local:int=conn.laddr.port #type:ignore
+        ip_remote:str|None=None
+        try:
+            ip_remote=conn.raddr.ip #type:ignore
+        except AttributeError:
+            pass
+        
+        port_remote:int|None=None
+        try:
+            port_remote=conn.addr.port #type:ignore
+        except AttributeError:
+            pass
+
+        pid:int|None=conn.pid
+        status:str=conn.status
+        tcp_conn=TcpConn(
+            ip_local=ip_local,
+            port_local=port_local,
+            ip_remote=ip_remote,
+            port_remote=port_remote,
+            pid=pid,
+            status=status,
+        )
+        tcp_conns.append(tcp_conn)
+
+    if debug is True:
+        print(f"### connections '{conn_kind}':")
+        for t in tcp_conns:
+            print(t.to_json())
+
+    return tcp_conns
 
 class Processes():
     def __init__(self, debug=False):
         self.debug=debug
 
-    def init(self):
-        self.procs_by_name=dict()
-        self.procs_by_pid=dict()
-        self.netstat_pids=dict()
-        self.set_tcp_connections()
+    def init(self) -> None:
+        self.tcp_connections=get_tcp_connections()
+        self.processes=self.get_processes()
 
-        # pprint(self.netstat_pids)
-        self.set_processes()
+    def get_processes(self) -> list[Proc]:
+        procs:list[Proc]=[]
+        dy_procs:dict[int,Proc]=dict()
+        to_set:dict[int, list[Proc]]=dict()
+        for proc in psutil.process_iter():
+            tcp_conns:list[TcpConn]=[t for t in self.tcp_connections if t.pid == proc.pid]
+            pid=proc.pid
+            ppid=proc.ppid()
+            tmp_proc=Proc(
+                name=proc.name(),
+                pid=pid,
+                ppid=ppid,
+                psproc=proc,
+                tcp_conns=tcp_conns,
+            )
+            dy_procs[pid]=tmp_proc
 
-        # sys.exit()
-
-    def set_tcp_connections(self):
-        for line in shell.cmd_get_value("netstat -aon").splitlines():
-            # Proto  Local Address          Foreign Address        State           PID
-            #  TCP    0.0.0.0:22             0.0.0.0:0              LISTENING       4664
-            #   UDP    0.0.0.0:123            *:*                                    1484
-            # reg_line=re.match(r"^\s+TCP\s+127.0.0.1:([0-9]+)\s+[0-9]+.[0-9]+.[0-9]+.[0-9]+:([0-9]+)\s+([A-Z]+)\s+([0-9]+)$", line)
-            line=line.strip()
-            if line:
-                fields=re.sub(r"\s+", r" ", line).split()
-                if len(fields) > 3:
-                    if fields[0] != "Proto":
-                        if len(fields) == 5:
-                            proto, ip_port_local, ip_port_foreign, state, pid = fields
-                        elif len(fields) == 4:
-                            proto, ip_port_local, ip_port_foreign, pid = fields
-                            state=None
-
-                        reg_ip_port_local=re.match(r"^(.+):([0-9]+)$", ip_port_local)
-                        ip_local=reg_ip_port_local.group(1)
-                        port_local=reg_ip_port_local.group(2)
-                        reg_ip_port_foreign=re.match(r"^(.+):(.+)$", ip_port_foreign)
-                        ip_foreign=reg_ip_port_foreign.group(1)
-                        port_foreign=reg_ip_port_foreign.group(2)
-
-                        if not pid in self.netstat_pids:
-                            self.netstat_pids[pid]=[]
-
-                        self.netstat_pids[pid].append(dict(
-                            ip_foreign=ip_foreign,
-                            ip_local=ip_local,
-                            ip_port_foreign=ip_port_foreign,
-                            ip_port_local=ip_port_local,
-                            pid=pid,
-                            port_foreign=port_foreign,
-                            port_local=port_local,
-                            proto=proto,
-                            state=state,
-                        ))
-
-    # def get_parent_pids(self, procs_by_pid, pnode=None):
-    #     # pprint(dy_nodes)
-    #     # go through all nodes,
-    #     # if ppid not found or pid == ppid then create a node parent
-    #     else 
-    #     create a node and for parent get ppid node 
-    #     so go for ppid node i
-    #     pass
-    #     for pid, proc in procs_by_pid.items():
-    #         if (pid == proc["ppid"]):
-    #             procs_by_pid[pid]["node"]=Node(dy=proc)
-    #         else:
-    #             if proc["ppid"] in procs_by_pid:
-    #                 pass
-    #                 print("found")
-    #             else:
-    #                 print("not found")
-
-                # if(pid, proc["ppid"])
-
-    def get_parent_pids(self, pid, level=0, parents=[]):
-        if pid not in parents:
-            if pid in self.procs_by_pid:
-                # input("{}{}".format(" "*level,pid))
-                parents.append(pid)
-                proc=self.procs_by_pid[pid]
-                if pid == proc["ppid"]:
-                    pass
+            if ppid == 0:
+                if ppid in dy_procs:
+                    tmp_proc.parent=dy_procs[ppid]
+                    tmp_proc.parent.children.append(tmp_proc)
                 else:
-                    self.get_parent_pids(proc["ppid"], level+1, parents)
-        else:
-            # print("stopped recursion")
-            pass
+                    tmp_proc.parent=None
+            else:
+                if pid == ppid:
+                    print(proc)
+                    raise NotImplementedError("PID == PPID")
+                if ppid in dy_procs:
+                    tmp_proc.parent=dy_procs[ppid]
+                    tmp_proc.parent.children.append(tmp_proc)
+                else:
+                    if ppid not in to_set:
+                        to_set[ppid]=[]
+                    to_set[ppid].append(tmp_proc)
 
-        if level == 0:
-            return parents
+            if pid in to_set:
+                for p in to_set[pid]:
+                    p.parent=tmp_proc
+                    tmp_proc.children.append(p)
+                del to_set[pid]
 
-    
+            procs.append(tmp_proc)
 
-    def set_processes(self):   
-        header=True
-        for line in shell.cmd_get_value("powershell.exe wmic process get Caption,ParentProcessId,ProcessId").splitlines():
-            line=line.strip()
-            if line:
-                if header is True:
-                    header=False
-                    continue
-                reg_line=re.match(r"^(.+?)\s+([0-9]+?)\s+([0-9]+?)$", line)
-                name=reg_line.group(1)
-                ppid=reg_line.group(2)
-                pid=reg_line.group(3)
-                proc=dict(
-                    name=name,
-                    ppid=ppid,
-                    pid=pid,
-                )
-                self.procs_by_pid[pid]=proc
+        if len(to_set) > 0:
+            pprint(to_set)
+            raise NotImplementedError("to_set is not empty")
 
-        for pid, proc in self.procs_by_pid.items():
-            if not "node" in proc:
-                tmp_pids=[p for p in reversed(self.get_parent_pids(pid, parents=[]))]
-                for t, tmp_pid in enumerate(tmp_pids):
-                    tmp_proc=self.procs_by_pid[tmp_pid]
-                    if not "node" in tmp_proc:
-                        parent_node=None
-                        if t > 0:
-                            parent_node=self.procs_by_pid[tmp_pids[t-1]]["node"]
-
-                        if tmp_proc["pid"] in self.netstat_pids:
-                            tmp_proc["netstat"]=self.netstat_pids[tmp_proc["pid"]]
-                        else:
-                            tmp_proc["netstat"]=[]
-
-                        tmp_proc["node"]=Node(dy=tmp_proc, parent=parent_node)
-
-                        if not tmp_proc["name"] in self.procs_by_name:
-                            self.procs_by_name[tmp_proc["name"]]=[]
-                        self.procs_by_name[tmp_proc["name"]].append(tmp_proc)
-
-        # browsers=self.from_name("iexplore.exe")
-        # pprint(browsers)
-            
-        # output=self.report(
-        #     "11260",
-        #     # pid=7932,
-        #     # pid=11260,
-        #     # from_root=True,
-        #     # only_children=True,
-        #     # depth=1,
-        #     separator=None,
-        #     show=True,
-        #     opts=[
-        #         # "indent", 
-        #         "pid"
-        #     ],
-        # )
-
-        # pprint(self.procs_by_pid["11260"]["node"].tree)
-
-        # work on how to display a tree.
-
-                # ppids=
-                # del procs[pid]
-                # print(proc["name"])
-                # generate_tree(proc, procs)
-        # pprint(proc_pids)
-        # processes=dict(
-        #     by_name=proc_names,
-        #     by_pid=proc_pids,
-        # )
-
-
-    def from_pid(self, pid):
-        pid=str(pid)
-        if pid in self.procs_by_pid:
-            return self.procs_by_pid[pid]
+        return procs
+        
+    def from_pid(self, pid:int) -> Proc | None:
+        for proc in self.processes:
+            if proc.pid == pid:
+                return proc
         return None
 
-    def from_name(self, name):
-        if name in self.procs_by_name:
-            return self.procs_by_name[name]
-        return []
+    def from_name(self, name:str) -> list[Proc]:
+        procs:list[Proc]=[]
+        for proc in self.processes:
+            if proc.name == name:
+                procs.append(proc)
+        return procs
 
-    def kill(self, pid):
-        try:
-            pid=int(pid)
-            cmd="taskkill /PID {} /F".format(pid)
-        except:
-            cmd="taskkill /F /IM {}".format(pid)
-        
-        if self.debug is True:
-            print(cmd)
+    def kill(self, pid:int):
+        proc=self.from_pid(pid)
+        if proc is not None:
+            proc.psproc.kill()
 
-        proc=subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-        if self.debug is True:
-            if stdout:
-                print(stdout.decode())
-            if stderr:
-                print(stderr.decode())
+    def get_proc_info(self, proc:Proc):
+        level=1
+        parents:list[Proc]=[]
+        tmp_proc=proc
+        root:Proc|None=None
+        while True:
+            if tmp_proc.parent is None:
+                break
+            else:
+                level+=1
+                tmp_proc=tmp_proc.parent
+                parents.insert(0, tmp_proc)
+                root=tmp_proc
+        return ProcInfo(proc=proc,level=level, parents=parents, root=root)
 
-    # example:
-    # self.processes.report(netstat["pid"], show=True, from_root=True, opts=["name", "pid"])
     def report(self,
-        pid,                    # user
-        depth=None,             # user
-        depth_node=None,
-        indent=True,            # user
-        infos=[],
-        from_root=False,        # user
-        only_children=False,    # user
-        opts=["all"],           # user
-        pnode=None,
-        ref_node=None,
-        separator=list(),       # user
-        show=False,             # user
+        pid:int,                            # user
+        indent:bool=True,                   # user
+        from_root:bool=False,               # user
+        opts:list[ReportOption]|None=None,  # user if None then all options are set
+        show:bool=False,                    # user
+        _infos:list[list[str|int|Process|list[TcpConn]]]|None=None,
+        _pproc:Proc|None=None,
+        _ref:ProcInfo|None=None,
+        _to_return:bool=True,
     ):
-        opts_choices=[
-            "indent",
-            "pid",
-            "ppid",
-            "name",
-            "node",
-            "netstat",
-        ]
+        if _infos is None:
+            _infos=[]
 
-        if "all" in opts:
-            opts=opts_choices
+        if opts is None:
+            opts=[
+                ReportOption.INDENT,
+                ReportOption.PID,
+                ReportOption.PPID,
+                ReportOption.NAME,
+                ReportOption.PROC,
+                ReportOption.TCPCONNS,
+            ]
 
-        if depth_node is None:
-            try:
-                pid=int(pid)
-            except:
-                print("pid '{}' is not {}".format(pid, str))
-                sys.exit(1)
+        if _pproc is None:
+            _pproc=self.from_pid(pid)
+            if _pproc is None:
+                raise Exception(f"Unknown PID {pid}")
 
-            pid=str(pid)
-            this_node=self.procs_by_pid[pid]["node"]
+        pproc_info=self.get_proc_info(_pproc)
+        if _ref is None:
+            _ref=pproc_info
 
-            if ref_node is None:
-                ref_node=this_node
-            pnode=this_node
-            depth_node=this_node
+        if from_root is True:
+            if pproc_info.root is not None:
+                return self.report(
+                    pid=pproc_info.root.pid,
+                    from_root=False,
+                    indent=indent,
+                    opts=opts,
+                    show=show,
+                    _infos=_infos,
+                    _pproc=pproc_info.root,
+                    _ref=_ref,
+                    _to_return=True,
+                )
+  
+        values:list[str|int|Process|list[TcpConn]]=[]
+        show_fields=""
 
-            if from_root is True:
-                if pnode.is_root is False:
-                    return self.report(
-                        this_node.root.dy["pid"],
-                        depth=depth,
-                        depth_node=None,
-                        from_root=from_root,
-                        only_children=only_children,
-                        indent=indent,
-                        infos=infos,
-                        opts=opts,
-                        pnode=pnode,
-                        ref_node=ref_node,
-                        separator=separator,
-                        show=show,
-                    )
+        prefix=(pproc_info.level-1)*"  "
+        for opt in opts:
+            value=None
+            field=None
+            if opt == ReportOption.INDENT:
+                value=prefix
+            elif opt == ReportOption.NAME:
+                value=_pproc.name
+            elif opt == ReportOption.PID:
+                value=_pproc.pid
+            elif opt == ReportOption.PPID:
+                value=_pproc.ppid
+            elif opt == ReportOption.PROC:
+                value=_pproc.psproc
+            elif opt == ReportOption.TCPCONNS:
+                value=_pproc.tcp_conns
+            else:
+                raise Exception(f"ReportOption unknown {opt}")
 
-
-        if separator is None:
-            if len(opts) > 1:
-                separator=list()
-
-        if only_children is True and depth_node == pnode:
-            if depth is not None:
-                depth+=1
-        else:
-            values=[]
-            show_fields=""
-
-            children_level=1
-            if only_children is True:
-                children_level=0
-            relative_depth=(pnode.level - depth_node.level) + children_level
-            prefix=(relative_depth-1)*"  "
-            for opt in opts:
-                if opt in opts_choices:
-                    value=None
-                    field=None
-                    if opt == "indent":
-                        value=prefix
-                    else:
-                        value=pnode.dy[opt]
-
-                    values.append(value)
-                    if show is True:
-                        space=" "
-                        if show_fields == "":
-                            space=""
-                            if indent is True:
-                                space+=prefix
-                        if opt == "pid":
-                            field="{:<6}".format(value)
-                        elif opt == "netstat":
-                            pass # print after
-                        else:
-                            field=value
-                        show_fields+=space+str(field)
-                else:
-                    print("For report opts '{}' not found in {}".format(opt, opts_choices))
-                    sys.exit(1)
-
-            if values:
-                if isinstance(separator, list):
-                    pass
-                elif isinstance(separator, dict):
-                    dy=dict()
-                    for v, value in enumerate(values):
-                        dy[opts[v]]=value
-                    values=dy
-                elif separator is None:
-                    values=values[0]
-
-                infos.append(values)
-
+            values.append(value)
             if show is True:
-                if show_fields:
-                    print(show_fields)
-                    if "netstat" in opts:
-                        print(''.join([ prefix+ "  " + l for l in pformat(pnode.dy["netstat"]).splitlines(True)]))
+                space=" "
+                if show_fields == "":
+                    space=""
+                    if indent is True:
+                        space+=prefix
+                if opt == ReportOption.PID:
+                    field="{:<6}".format(value)
+                elif opt == ReportOption.PROC:
+                    pass # print after
+                elif opt == ReportOption.TCPCONNS:
+                    pass # print after
+                else:
+                    field=value
+                show_fields+=space+str(field)
 
-        recurse=False
-        if depth is None:
-            recurse=True
-        else:
-            if relative_depth < depth:
+        _infos.append(values)
+
+        if show is True:
+            if show_fields:
+                print(show_fields)
+                if ReportOption.PROC in opts:
+                    print(''.join([ prefix+ "  " + l for l in pformat(_pproc.psproc).splitlines(True)]))
+                if ReportOption.TCPCONNS in opts:
+                    print(''.join([ prefix+ "  " + l for l in pformat(_pproc.tcp_conns).splitlines(True)]))
+
+        for tmp_proc in _pproc.children:
+            recurse=False
+            tmp_proc_info=self.get_proc_info(tmp_proc)
+            if tmp_proc_info.level < _ref.level:
+                if tmp_proc in _ref.parents:
+                    recurse=True
+            elif tmp_proc_info.level == _ref.level:
+                if tmp_proc == _ref.proc:
+                    recurse=True
+            else:
                 recurse=True
 
-        if recurse is True:
-            for node in pnode.nodes:
-                recurse_node=False
-                if from_root is True:
-                    # print(ref_node)
-                    if node.level < ref_node.level:
-                        if node in ref_node.parents:
-                            recurse_node=True
-                    elif node.level == ref_node.level:
-                        if node == ref_node:
-                            recurse_node=True
-                    else:
-                        recurse_node=True
-                else:
-                    recurse_node=True
+            if recurse is True:
+                self.report(
+                    pid=pid,
+                    indent=indent,
+                    from_root=False,
+                    opts=opts,
+                    show=show, 
+                    _infos=_infos,
+                    _pproc=tmp_proc,
+                    _ref=_ref,
+                    _to_return=False,
+                )
 
-                if recurse_node is True:
-                    self.report(
-                        pid,
-                        depth=depth,
-                        depth_node=depth_node,
-                        indent=indent,
-                        infos=infos,
-                        from_root=from_root,
-                        only_children=only_children,
-                        opts=opts,
-                        pnode=node,
-                        ref_node=ref_node,
-                        separator=separator,
-                        show=show, 
-                    )
-
-        if pnode == depth_node:
-            return infos
-        # print(pid)
-
-# def generate_tree(pproc, procs, tree=dict()):
-#     # if not tree:
-#     tree[pproc["pid"]]=deepcopy(pproc)
-#     tree[pproc["pid"]]["procs"]=dict()
-
-#     for node in pproc["node"].nodes:
-#         pid, proc = node.items()
-#         # tree[proc["pid"]]["nodes"][node["pid"]]=deepcopy(node)
-
-#         del procs[pid]
-#         # return generate_tree(deepcopy(proc), procs, tree)
-
-#     # return tree
-# # def 
+        if _to_return is True:
+            return _infos
