@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from typing import Callable
 import json
 from pprint import pprint
 import json
@@ -11,11 +12,7 @@ import time
 import traceback
 import yaml
 
-import pyautogui
-
-
 from selenium.webdriver.common.by import By
-
 
 # pip3 install pyautogui
 
@@ -24,27 +21,44 @@ def get_accepted_keys():
 
 if __name__ == "__main__":
     import sys, os
-
+    import typing
     import importlib
     direpa_script=os.path.dirname(os.path.realpath(__file__))
     direpa_script_parent=os.path.dirname(direpa_script)
     module_name=os.path.basename(os.path.dirname(os.path.realpath(__file__)))
     sys.path.insert(0, direpa_script_parent)
-    pkg=importlib.import_module(module_name)
+    if typing.TYPE_CHECKING:
+        import __init__ as package #type:ignore
+        from __init__ import MouseEvents
+    pkg:"package" = importlib.import_module(module_name) #type:ignore
     del sys.path[0]
 
-    # args, dy_app=pkg.Options(filenpa_app="gpm.json", filenpa_args="config/options.json", allow_empty=True, cli_expand=True).get_argsns_dy_app()
+    if sys.platform == "win32":
+        import pyautogui
+    elif sys.platform == "linux":
+        pass
+    else:
+        raise NotImplementedError(f"Platform not support '{sys.platform}'")
+
+    def seed(pkg_major, direpas_configuration:dict|None, fun_auto_migrate:Callable):
+        fun_auto_migrate()
+
+    filenpa_gpm=os.path.join(direpa_script, "gpm.json")
+    etconf=pkg._Etconf(filenpa_gpm=filenpa_gpm, enable_dev_conf=False, tree=dict(), seed=seed)
 
     args=pkg.Nargs(
         options_file="config/options.yaml",
         metadata=dict(executable="selenium_wrapper"),
+        path_etc=etconf.direpa_configuration,
         substitute=True,
     ).get_args()
 
     debug=args.debug._here
 
+    filenpa_settings=os.path.join(etconf.direpa_configuration, "settings.json")
+
     if args.selenium_options._here:
-        srv=pkg.SeleniumServer(debug=debug)
+        srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, debug=debug)
         print()
         print("## Standalone")
         cmd=[ srv.filenpa_java, "-jar", srv.filenpa_selenium_server, "-help" ]
@@ -59,33 +73,36 @@ if __name__ == "__main__":
         subprocess.run(cmd)
         sys.exit(0)
     elif args.gui._here:
-        srv=pkg.SeleniumServer(debug=debug)
+        srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, debug=debug)
         srv.show_gui()
         sys.exit(0)
     elif args.exit._here:
-        srv=pkg.SeleniumServer(debug=debug)
+        srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, debug=debug)
         srv.reset()
         sys.exit(0)
     elif args.reset._here:
-        srv=pkg.SeleniumServer(debug=debug)
-        srv.reset(args.drivers._values)
+        srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, debug=debug)
+        srv.reset(args.reset.browsers._values)
 
     if args.connect._here:
-        srv=pkg.SeleniumServer(load_extensions=args.connect.extensions._here, debug=debug)
+        srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, load_extensions=args.connect.extensions._here, debug=debug)
 
         release_keys=[]
 
         try:
             cmd_pid=srv.windows.get_active()
 
-            if args.connect.extensions.accessibility._here and args.connect.driver._value != "chrome":
-                print("To use accessibility plugin, please use chrome driver.")
+            if args.connect.extensions.accessibility._here and args.connect.browser._value != "chrome":
+                print("To use accessibility plugin, please use chrome browser.")
                 sys.exit(1)
 
-            srv.connect(args.connect.driver._value, reset=args.connect.driver.reset._here)
+            srv.connect(args.connect.browser._value, reset=args.connect.browser.reset._here)
+
+            if args.connect.browser.info._here:
+                print(srv.get_browser().data.to_json())
 
             if args.connect.focus._here:
-                srv.browser_focus()
+                srv.get_browser().browser_focus(debug=debug)
 
             if args.connect.url._here:
                 url_alias=args.connect.url.alias._value
@@ -109,10 +126,10 @@ if __name__ == "__main__":
                 )
 
                 if args.connect.url.insecure._here:
-                    if srv.get_driver().dy["name"] == "firefox":
+                    if srv.get_browser().data.name == "firefox":
                         confirmCert=False
                         try:
-                            srv.get_driver().get(url)
+                            srv.get_browser().driver.get(url)
                         except BaseException as e:
                             if e.__class__.__name__ == "InsecureCertificateException":
                                 print("Override certificate Exception")
@@ -121,31 +138,33 @@ if __name__ == "__main__":
                                 print(traceback.format_exc())
 
                         if confirmCert is True:
-                            srv.get_driver().find_element(By.ID, "advancedButton").click()
-                            srv.get_driver().find_element(By.ID, "exceptionDialogButton").click()
-                    elif srv.get_driver().dy["name"] == "chrome":
-                        srv.get_driver().get(url)
-                        advanced_button=srv.get_driver().get_elem(id="details-button", error=False, wait_ms=800)
+                            srv.get_browser().driver.find_element(By.ID, "advancedButton").click()
+                            srv.get_browser().driver.find_element(By.ID, "exceptionDialogButton").click()
+                    elif srv.get_browser().data.name == "chrome":
+                        srv.get_browser().driver.get(url)
+                        advanced_button=srv.get_browser().get_elem(id="details-button", error=False, wait_ms=800)
                         if advanced_button is not None:
                             advanced_button.click()
-                            srv.get_driver().find_element(By.ID, "proceed-link").click()
-
-                        # print(advanced_button)
+                            srv.get_browser().driver.find_element(By.ID, "proceed-link").click()
                     else:
-                        print("--insecure flag needs to be implemented for driver '{}'".format(srv.get_driver().dy["name"]))
+                        print("--insecure flag needs to be implemented for browser '{}'".format(srv.get_browser().data.name))
                         sys.exit(1)
                 else:
-                    srv.get_driver().get(url)
+                    srv.get_browser().driver.get(url)
 
 
             if args.connect.refresh._here:
-                srv.refresh(wait_ms=args.connect.refresh.wait._value)
+                srv.get_browser().refresh(wait_ms=args.connect.refresh.wait._value)
 
             if args.connect.console._here:
                 if args.connect.focus._here is False:
-                    srv.browser_focus()
-                pyautogui.hotkey('ctrl', 'shift', 'k')
+                    srv.get_browser().browser_focus(debug=debug)
 
+                if sys.platform == "win32":
+                    pyautogui.hotkey('ctrl', 'shift', 'k')
+                elif sys.platform == "linux":
+                    os.system(f"xdotool key 'ctrl+shift+k'")
+                
                 if args.connect.focus._here is False:
                     srv.windows.focus(cmd_pid)
 
@@ -156,21 +175,30 @@ if __name__ == "__main__":
                     if accepted_keys is None:
                         accepted_keys=get_accepted_keys()
 
-                    if cmd_arg._value not in accepted_keys:
+                    if cmd_arg._value.lower() not in accepted_keys:
                         pkg.msg.error("key '{}' not found in {}".format(cmd_arg._value, accepted_keys), exit=1)
 
                     if cmd_arg.pause._value is not None:
                         time.sleep(float(cmd_arg.pause._value)/1000)
 
                     if cmd_arg.down._here:
-                        pyautogui.keyDown(cmd_arg._value)
+                        if sys.platform == "win32":
+                            pyautogui.keyDown(cmd_arg._value)
+                        elif sys.platform == "linux":
+                            os.system(f"xdotool keydown {cmd_arg._value}")
                         release_keys.append(cmd_arg._value)
                     elif cmd_arg.up._here:
-                        pyautogui.keyUp(cmd_arg._value)
+                        if sys.platform == "win32":
+                            pyautogui.keyUp(cmd_arg._value)
+                        elif sys.platform == "linux":
+                            os.system(f"xdotool keyup {cmd_arg._value}")
                         if cmd_arg._value in release_keys:
                             release_keys.remove(cmd_arg._value)
                     else:
-                        pyautogui.press(cmd_arg._value)
+                        if sys.platform == "win32":
+                            pyautogui.press(cmd_arg._value)
+                        else:
+                            os.system(f"xdotool key {cmd_arg._value}")
 
                 elif cmd_arg._name == "keys":
                     if accepted_keys is None:
@@ -180,18 +208,26 @@ if __name__ == "__main__":
                         time.sleep(float(cmd_arg.pause._value)/1000)
 
                     for key in cmd_arg._values:
-                        if key not in accepted_keys:
+                        if key.lower() not in accepted_keys:
                             pkg.msg.error("key '{}' not found in {}".format(key, accepted_keys), exit=1)
 
-                    pyautogui.hotkey(*cmd_arg._values)
+                    if sys.platform == "win32":
+                        pyautogui.hotkey(*cmd_arg._values)
+                    elif sys.platform == "linux":
+                        os.system(f"xdotool key {"+".join(cmd_arg._values)}")
+                        
                 elif cmd_arg._name == "write":
                     if cmd_arg.pause._value is not None:
                         time.sleep(float(cmd_arg.pause._value)/1000)
-                    pyautogui.write(cmd_arg._value)
+                    if sys.platform == "win32":
+                        pyautogui.write(cmd_arg._value)
+                    else:
+                        os.system(f"xdotool type {cmd_arg._value}")
+                        
                 elif cmd_arg._name == "scroll":
-                    srv.get_driver().scroll(percent=cmd_arg._value, pause_ms=cmd_arg.pause._value)
+                    srv.get_browser().scroll(percent=cmd_arg._value, pause_ms=cmd_arg.pause._value, debug=debug)
                 elif cmd_arg._name == "scroll_to":
-                    srv.get_driver().scroll_to(
+                    srv.get_browser().scroll_to(
                         id=cmd_arg.id._value, 
                         xpath=cmd_arg.xpath._value,
                         xpath_context=cmd_arg.xpath.context._value,
@@ -199,15 +235,16 @@ if __name__ == "__main__":
                         pause_ms=cmd_arg.pause._value,
                     ) 
                 elif cmd_arg._name == "event":
-                    event_str=None
+                    event_str:MouseEvents|None=None
 
                     for event_arg in cmd_arg.name._args:
-                        event_str=event_arg._name
+                        event_str=MouseEvents(event_arg._name)
 
                     if event_str is None:
-                        pkg.msg.error("Please choose an event name.", exit=1)
+                        pkg.msg.error("Please choose an event name.")
+                        sys.exit(1)
 
-                    srv.get_driver().send_js_event(
+                    srv.get_browser().send_js_event(
                         event_str=event_str,
                         id=cmd_arg.id._value, 
                         xpath=cmd_arg.xpath._value,
@@ -219,24 +256,31 @@ if __name__ == "__main__":
                     if cmd_arg.pause._value is not None:
                         time.sleep(float(cmd_arg.pause._value)/1000)
                     
-                    elem=srv.get_driver().get_elem(
+                    elem=srv.get_browser().get_elem(
                         id=cmd_arg.id._value, 
                         xpath=cmd_arg.xpath._value,
                         xpath_context=cmd_arg.xpath.context._value,
                         wait_ms=cmd_arg.wait._value,
+                        error=True,
                     )
+                    if elem is None:
+                        raise Exception("select elem returns None")
                     if cmd_arg.value._value is not None:
                         pkg.send_keys(elem, cmd_arg.value._value)
                 elif cmd_arg._name == "click":
                     if cmd_arg.pause._value is not None:
                         time.sleep(float(cmd_arg.pause._value)/1000)
                     
-                    elem=srv.get_driver().get_elem(
+                    elem=srv.get_browser().get_elem(
                         id=cmd_arg.id._value, 
                         xpath=cmd_arg.xpath._value,
                         xpath_context=cmd_arg.xpath.context._value,
                         wait_ms=cmd_arg.wait._value,
+                        error=True,
                     )
+                    if elem is None:
+                        raise Exception("select elem returns None")
+
 
                     if cmd_arg.file._here is True:
                         pkg.send_keys(elem, cmd_arg.file._value)
@@ -245,68 +289,38 @@ if __name__ == "__main__":
                         elem.click()            
 
             if args.connect.extensions.accessibility._here:
-                import pyautogui
-                # you have to take a screenshot of the button
-                extn = pyautogui.locateOnScreen(os.path.join(srv.driver_data["direpa_extensions"], "site_improve_button.png"))
-                offset=15
-                if extn is None:
-                    print("Not Found button.png")
-                    sys.exit(1)
-                time.sleep(.5)
-                pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
-
-            if args.driver_info._here:
-                pprint(srv.get_driver().dy)
+                if sys.platform == "win32":
+                    import pyautogui
+                    # you have to take a screenshot of the button
+                    extn = pyautogui.locateOnScreen(os.path.join(srv.get_browser().data.direpa_extensions, "site_improve_button.png"))
+                    offset=15
+                    if extn is None:
+                        print("Not Found button.png")
+                        sys.exit(1)
+                    time.sleep(.5)
+                    pyautogui.click(x=extn[0]+offset,y=extn[1]+offset,clicks=1,interval=0.0,button="left")
+                else:
+                    raise NotImplemented(f"extensions accessibility not implemented on platform '{sys.platform}'")
 
             if args.connect.cmd._here:
                 srv.windows.focus(cmd_pid)
 
             if args.connect.logs._here:
-                if srv.get_driver().dy["name"] == "chrome":
+                if srv.get_browser().data.name == "chrome":
                     wait_ms=args.connect.logs.wait._value
                     if wait_ms is not None:
                         time.sleep(float(wait_ms)/1000)
-                    for entry in srv.get_driver().get_log('browser'):
+                    for entry in srv.get_browser().driver.get_log('browser'):
                         print(json.dumps(entry))
                 else:
-                    pkg.msg.error(f"--logs is not implemented for driver '{srv.get_driver().dy['name']}'", exit=1)
+                    pkg.msg.error(f"--logs is not implemented for browser '{srv.get_browser().data.name}'", exit=1)
                 
         except:
             srv.windows.focus(cmd_pid)
             raise
         finally:
             for key in release_keys:
-                pyautogui.keyUp(key)
-
-
-        # if args.clear_cache._here:
-        #     driver=srv.get_driver()
-        #     if driver.dy["name"] == "firefox": 
-        #         print("continue")
-
-        #         dialog_selector = '#dialogOverlay-0 > groupbox:nth-child(1) > browser:nth-child(2)'
-        #         accept_dialog_script = (
-        #             f"const browser = document.querySelector('{dialog_selector}');" +
-        #             "browser.contentDocument.documentElement.querySelector('#clearButton').click();"
-        #         )
-        #         driver.get('about:preferences#privacy')
-        #         driver.get_elem("clearSiteDataButton", wait_ms=3000).click()
-        #         # driver.find_element(By.CSS_SELECTOR, "#clearButton")
-        #         driver.get_elem("clearButton", wait_ms=3000).click()
-        #         sys.exit()
-        #         wait = WebDriverWait(driver, timeout)
-
-        #         # Click the "Clear Data..." button under "Cookies and Site Data".
-        #         wait.until(get_clear_site_data_button)
-        #         get_clear_site_data_button(driver).click()
-
-        #         # Accept the "Clear Data" dialog by clicking on the "Clear" button.
-        #         wait.until(get_clear_site_data_dialog)
-        #         driver.execute_script(accept_dialog_script)
-
-        #         # Accept the confirmation alert.
-        #         wait.until(EC.alert_is_present())
-        #         alert = Alert(driver)
-        #         alert.accept()
-
-
+                if sys.platform == "win32":
+                    pyautogui.keyUp(key)
+                elif sys.platform == "linux":
+                    os.system(f"xdotool keyup {key}")

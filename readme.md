@@ -2,6 +2,7 @@
 pip install pyautogui selenium==4.4.3 lxml
 ```
 Java needs to be installed to (i.e. "jre-8u251-windows-x64.exe")
+On debian it can be installed with sudo apt-get install default-jre
 
 Problem drivers need to be related to the version of the browser that you are using, otherwise it broke the software. It means that this application break every now and then. Better disable update on browsers and decide when and update the related driver at the same time.
 
@@ -198,10 +199,6 @@ Typical Debug:
     // updater.exe (updater in Linux).
 
 ```
-
-If firefox stops working again because of Marion
-
-for internet explorer make sure you go to options and security tab and for each zone, unchek "enable protected mode" otherwise you are going to have issue in the log file "iexplorer a Protected Mode boundary has been crossed"
 
 ### Add an extension / accessibility
 #### Chrome

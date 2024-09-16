@@ -8,75 +8,73 @@ import subprocess
 import sys
 
 from ..gpkgs import message as msg
+from .processes import Processes, Proc, ReportOption
 
 
 def get_root_browsers(
-    debug=False,
-    filen_browser=None,
-    processes_obj=None,    
+    debug:bool,
+    browser_proc_name:str,
+    processes_obj:Processes,
 ):
-    browsers=processes_obj.from_name(filen_browser)
-    root_browsers=[]
+    browsers=processes_obj.from_name(browser_proc_name)
+    root_browsers:list[Proc]=[]
     for browser in browsers:
-        if browser["node"].parent is None or (browser["node"].parent.dy["name"] != filen_browser):
+        if browser.parent is None or (browser.parent.name != browser_proc_name):
             root_browsers.append(browser)
             if debug is True:
-                processes_obj.report(browser["pid"], show=True, from_root=True, opts=["name", "pid"])
-                print()
+                processes_obj.report(browser.pid, show=True, from_root=True, opts=[ReportOption.PID, ReportOption.NAME])
     return root_browsers
 
 def get_browser_window(
-    debug=False, 
-    driver_browser_pid=None,
-    driver_name=None,
-    processes_obj=None,
-    root_browsers=[]
+    browser_pid:int,
+    browser_name:str,
+    processes_obj:Processes,
 ):
-    if debug is True:
-        print(root_browsers)
-    if driver_name == "edge":
-        return processes_obj.procs_by_name["MicrosoftEdgeCP.exe"][0]
-    elif driver_name == "iexplorer":
-        for browser in root_browsers:
-            if browser["ppid"] == driver_browser_pid:
-                return browser
-        hasBeenKilled=False
-        for browser in root_browsers:
-            hasBeenKilled=True
-            processes_obj.kill(browser["pid"])
-
-        if hasBeenKilled is True:
-            msg.error("Stalled browser for '{}' has been killed please relaunch command".format(driver_name), exit=1)
-        else:
-            msg.error("No Suitable existing browser has been found for '{}'. Try reset".format(driver_name), exit=1)
-    elif driver_name in ["firefox", "chrome"]:
-        return processes_obj.from_pid(driver_browser_pid)
-    # elif driver_name == "chrome":
-        # print(s)
-        # pprint(browsers)
+    if browser_name == "edge":
+        if sys.platform != "win32":
+            raise Exception(f"browser '{browser_name}' not available on platform '{sys.platform}'")
+        return processes_obj.from_name("MicrosoftEdgeCP.exe")[0]
+    elif browser_name in ["firefox", "chrome"]:
+        return processes_obj.from_pid(browser_pid)
 
 def get_selenium_browsers(
-    driver_filen_exe=None,
-    driver_name=None,
-    root_browsers=[],  
+    driver_proc_name:str,
+    browser_name:str,
+    root_browsers:list[Proc]|None=None,
 ):
-    selenium_browsers=[]
+    if root_browsers is None:
+        root_browsers=[]
+    selenium_browsers:list[Proc]=[]
+
+
     for browser in root_browsers:
-        if driver_name == "edge":
-            selenium_browsers.append(browser)
-        elif driver_name == "firefox":
-            if len(browser["node"].nodes) == 1:
-                child=browser["node"].nodes[0]
-                if len(child.nodes) > 0:
-                    selenium_browsers.append(browser)
-            else:
-                if len(browser["netstat"]) > 0:
-                    if browser["netstat"][0]["state"] == "LISTENING":
+        if sys.platform == "win32":
+            if browser_name == "edge":
+                selenium_browsers.append(browser)
+            elif browser_name == "firefox":
+                input("ouais")
+                if len(browser.children) == 1:
+                    child=browser.children[0]
+                    if len(child.children) > 0:
                         selenium_browsers.append(browser)
-        else:
-            parent_first=browser["node"].parent
-            if parent_first is not None:
-                if parent_first.dy["name"] in [driver_filen_exe, "unknown"]: # selenium browser
+                else:
+                    if len(browser.tcp_conns) > 0:
+                        if browser.tcp_conns[0].status == "LISTEN":
+                            selenium_browsers.append(browser)
+            else:
+                parent=browser.parent
+                if parent is not None:
+                    if parent.name in [driver_proc_name, "unknown"]: # selenium browser
+                        selenium_browsers.append(browser)
+        elif sys.platform == "linux":
+            parent=browser.parent
+            if parent is not None:
+                if parent.name in [driver_proc_name, "unknown"]: # selenium browser
                     selenium_browsers.append(browser)
+                else:
+                    if browser_name == "firefox":
+                        if len(browser.tcp_conns) > 0:
+                            if browser.tcp_conns[0].status == "LISTEN":
+                                selenium_browsers.append(browser)
 
     return selenium_browsers
