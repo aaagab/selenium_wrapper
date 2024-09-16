@@ -1,19 +1,19 @@
 args:
   _examples: |
-    selenium_wrapper --connect --driver chrome --accessibility --refresh --url https://www.example.com/e/example/login
-    selenium_wrapper --connect --driver firefox --url departments --path-project A:\wrk\e\example\1\src --params "{'fruit':'apple','region':'greenland'}"
-    selenium_wrapper --connect --driver firefox --url departments --hostname https://www.example.com/e/example
-    selenium_wrapper --connect --driver firefox --url events/create --select "[{'frmEventDescription': 'mytext'}]" --delay 1000
-    selenium_wrapper --connect --driver firefox --url events/create --select 'frmEventDescription' --delay 1000
-    main.py --connect --driver firefox --focus --url request/new --console --delay 1000 --click input-organization-chart --file _tests/files/file2.txt
-    main.py --connect --driver firefox --focus --url request/new --console --delay 1000 --files "{'input-organization-chart': '_tests/files/file2.txt'}"
+    selenium_wrapper --connect --browser chrome --accessibility --refresh --url https://www.example.com/e/example/login
+    selenium_wrapper --connect --browser firefox --url departments --path-project A:\wrk\e\example\1\src --params "{'fruit':'apple','region':'greenland'}"
+    selenium_wrapper --connect --browser firefox --url departments --hostname https://www.example.com/e/example
+    selenium_wrapper --connect --browser firefox --url events/create --select "[{'frmEventDescription': 'mytext'}]" --delay 1000
+    selenium_wrapper --connect --browser firefox --url events/create --select 'frmEventDescription' --delay 1000
+    main.py --connect --browser firefox --focus --url request/new --console --delay 1000 --click input-organization-chart --file _tests/files/file2.txt
+    main.py --connect --browser firefox --focus --url request/new --console --delay 1000 --files "{'input-organization-chart': '_tests/files/file2.txt'}"
 
   clear_cache:
     _show: false
 
   connect:
     _aliases: --connect,-c
-    _info: Launch a selected driver on top of the grid
+    _info: Launch a selected browser on top of the grid
     _xor: "scroll,scroll_to"
 
     click:
@@ -48,13 +48,16 @@ args:
     console:
       _info: open browser console
 
-    driver:
-      _aliases: --driver,-d
+    browser:
+      _aliases: --browser,-b
       _default: "firefox"
-      _info: select driver from (chrome, edge, firefox, iexplorer)
-      _label: DRIVER_NAME
+      _info: select browser from (chrome, edge, firefox)
+      _label: BROWSER_NAME
       _required: true
       reset:
+
+      info:
+        _info: Show selected browser information
 
     extensions:
       _info: when present extensions present in selenium media folder are loaded automatically
@@ -63,7 +66,7 @@ args:
         _info: it clicks the addons buttons
 
     focus:
-      _info: focus browser window. This action works partially on iexplorer or edge, those
+      _info: focus browser window. This action works partially edge, those
         browser needs not to be minimized in order to operate.
 
     logs:
@@ -186,9 +189,6 @@ args:
   debug:
     _info: display info in realtime for debugging
 
-  driver_info:
-    _info: Show selected driver specifications
-
   exit:
     _info: Close All Selenium processes
 
@@ -197,11 +197,10 @@ args:
 
   reset:
     _info: Reset Selenium Server
-    drivers:
-      _info: select multiple drivers from (chrome, edge, firefox, iexplorer)
+    browsers:
+      _info: select multiple browsers from (chrome, edge, firefox)
       _values: '*'
-      _label: DRIVER_NAME
+      _label: BROWSER_NAME
 
   selenium_options:
     _info: Show all command line options for Selenium Server
-

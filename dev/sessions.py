@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
+from requests.models import Response
 from pprint import pprint
 import json
 import os
-import re
+import requests
 import shlex
 import subprocess
 import sys
+
+from .objs import BrowserData, Session, NetstatObj
+from .processes import Processes, get_tcp_connections
 
 from ..gpkgs import shell_helpers as shell
 from ..gpkgs import message as msg
 
 def close_sessions(
-    debug=False,
-    grid_url=None,
-    grid_url_pid=None,
+    grid_url:str,
+    grid_url_pid:int|None,
+    debug:bool=False,
 ):
     if debug == True:
-        print("Close All Sessions")
+        print("Closing All Sessions")
 
     for session in get_sessions(
         debug=debug,
@@ -25,15 +29,15 @@ def close_sessions(
     ):
         session_close(
             grid_url=grid_url,
-            session_id=session["id"],
+            session_id=session.id,
         )
 
 def get_session(
-    debug=False,
-    driver_data=None,
-    grid_url=None,
-    grid_url_pid=None,
-):
+    debug:bool,
+    browser_data:BrowserData,
+    grid_url:str,
+    grid_url_pid:int|None,
+) -> Session|None:
     sessions=get_sessions(
         debug=debug,
         grid_url=grid_url,
@@ -41,199 +45,98 @@ def get_session(
     )
 
     for session in sessions:
-        browser_name=session["capabilities"]["browserName"]
-        # print(driver_data["name"] , session)
-        
-        if browser_name == driver_data["browser_name"]:
+        browser_name=session.capabilities["browserName"]
+        if browser_name == browser_data.name:
             return session
-        # print(browser_name)
-
     return None
 
 def session_close(
-    grid_url=None,
-    session_id=None,
+    grid_url:str,
+    session_id:str,
 ):
-    print("close the session")
-    subprocess.run(shlex.split("curl -sS -X \"DELETE\" {}/session/{}".format(grid_url, session_id)),stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-    # you can also see the session from there on the browser, maybe modify it too.
-    # http://127.0.0.1:4444/wd/hub/session/a09e521b-bfc7-4d8e-ab20-c50cf74160f9
-    # http://127.0.0.1:4444/wd/hub/session/8e35d47a-9f98-4ff0-bb44-9eeb5d781ae3
-
-def set_sessions(
-    debug=False,
-    drivers_data=dict(),
-    grid_url=None,
-    grid_url_pid=None,
-    processes_obj=None,
-):
-    sessions=get_sessions(
-        debug=debug,
-        grid_url=grid_url,
-        grid_url_pid=grid_url_pid,
-    )
-    if sessions:
-        netstats=get_netstats(
-            debug=debug,
-            processes_obj=processes_obj,
-        )
-        for session in sessions:
-            browser_name=session["capabilities"]["browserName"]
-            driver_name=[k for k, v in drivers_data.items() if v["browser_name"] == browser_name][0]
-            driver_data=drivers_data[driver_name]
-            if driver_data["session"] is None:
-                if driver_data["session_proc_name"] in netstats:
-                    for netstat in netstats[driver_data["session_proc_name"]]:
-                        if debug is True:
-                            processes_obj.report(netstat["pid"], show=True, from_root=True, opts=["name", "pid"])
-                        if is_session_driver(debug, netstat["port"], session["id"]) is True:
-                            if debug is True:
-                                print("For driver '{}' found active session '{}'".format(driver_name, session["id"]))
-                            driver_data["session"]=session
-                            driver_data["browser_session"]=netstat
-                            break
-
-
+    print("Closing the session")
+    url=f"{grid_url}/session/{session_id}"
+    res:Response=requests.delete(url)
+    res.raise_for_status()
+    
 def get_browser_pid(
-    browser_proc_name,
-    driver_proc_name,
-    get_grid_url_pid,
-    processes_obj
+    browser_proc_name:str,
+    driver_proc_name:str,
+    grid_pid:int,
+    processes_obj:Processes,
 ):
-    driver_pid=None
-    browser_pid=None
-    for driver_node in processes_obj.from_pid(get_grid_url_pid)["node"].nodes:
-        if driver_node.dy["name"] == driver_proc_name:
-            if driver_pid is None:
-                driver_pid=driver_node.dy["pid"]
-                for browser_node in driver_node.nodes:
-                    if browser_node.dy["name"] == browser_proc_name:
-                        if browser_pid is None:
-                            browser_pid=browser_node.dy["pid"]
-                        else:
-                            msg.error("There are at least two browsers '{}' with driver '{}' please --reset selenium".format(browser_proc_name, driver_proc_name), exit=1)
-            else:
-                msg.error("There are at least two drivers '{}' please --reset selenium".format(driver_proc_name), exit=1)
+    driver_pid:int|None=None
+    browser_pid:int|None=None
+    grid_proc=processes_obj.from_pid(pid=grid_pid)
+    if grid_proc is not None:
+        for proc in grid_proc.children:
+            if proc.name == driver_proc_name:
+                if driver_pid is None:
+                    driver_pid=proc.pid
+                    for browser_proc in proc.children:
+                        if browser_proc.name == browser_proc_name:
+                            if browser_pid is None:
+                                browser_pid=browser_proc.pid
+                            else:
+                                msg.error(f"There are at least two browsers '{browser_proc_name}' with driver '{driver_proc_name}' please --reset selenium")
+                                sys.exit(1)
+                else:
+                    msg.error(f"There are at least two drivers '{driver_proc_name}' please --reset selenium")
+                    sys.exit(1)
 
     if browser_pid is None:
-        msg.error("No pid found for browser '{}'".format(browser_proc_name), exit=1)
+        msg.error(f"No pid found for browser '{browser_proc_name}'")
+        sys.exit(1)
 
     return browser_pid
 
 def get_netstats(
-    debug=False,
-    processes_obj=None,
+    debug:bool,
+    processes_obj:Processes,
 ):
-    netstats=dict()
-    cmd="netstat -aon -p tcp"
-    regex=r"^TCP\s+127.0.0.1:([0-9]+)\s+0.0.0.0:0\s+LISTENING\s+([0-9]+)$"
-    for line in shell.cmd_get_value(cmd).splitlines():
-        line=line.strip()
-        if line:
-            # TCP    127.0.0.1:57845        0.0.0.0:0              LISTENING       25612
-            reg_listen=re.match(regex,line)
-            if reg_listen:
-                pid=reg_listen.group(2)
-                port=reg_listen.group(1)
-                proc_name=processes_obj.procs_by_pid[pid]["name"]
-                if not proc_name in netstats:
-                    netstats[proc_name]=[]
-
-                netstats[proc_name].append(dict(
-                    pid=pid,
-                    port=port,
+    netstats:dict[str, list[NetstatObj]]=dict()
+    tcp_conns=get_tcp_connections(conn_kind="tcp")
+    for tcp_conn in tcp_conns:
+        if tcp_conn.pid is not None:
+            proc=processes_obj.from_pid(tcp_conn.pid)
+            if proc is not None:
+                if proc.name not in netstats:
+                    netstats[proc.name]=[]
+                netstats[proc.name].append(NetstatObj(
+                    port=tcp_conn.port_local,
+                    pid=tcp_conn.pid,
+                    proc_name=proc.name,
                 ))
-
+                
     if debug is True:
-        print(cmd)
-        print(regex)
-        pprint(netstats)
+        for key in sorted(netstats):
+            for obj in netstats[key]:
+                print(obj.to_json())
+            
     return netstats
 
 def get_sessions(
-    debug=False,
-    grid_url=None,
-    grid_url_pid=None,
-):
-    cmd="curl {}/sessions".format(grid_url)
+    debug:bool,
+    grid_url:str,
+    grid_url_pid:int|None,
+) -> list[Session]:
+    url=f"{grid_url}/sessions"
+    res:Response=requests.get(url)
+    res.raise_for_status()
+    data=res.json()
+    
     if debug is True:
-        print(cmd)
-    raw_curl=shell.cmd_get_value(cmd, none_on_error=True, no_err_if_std=True)
-    if raw_curl is None:
-        raw_curl=""
+        print(url)
+        pprint(data)
 
-    dy_curl={}
-    try:
-        dy_curl = json.loads(raw_curl)
-    except ValueError:
-        if grid_url_pid is not None:
-            print("Error when getting sessions data")
-            pprint(raw_curl)
-            sys.exit(1)
+    sessions:list[Session]=[]
 
-    sessions=[]
     if grid_url_pid is not None:
-        for session in dy_curl["value"]:
-            sessions.append(session)
+        try:
+            for session in data["value"]:
+                sessions.append(Session(capabilities=session["capabilities"], id=session["id"]))
+        except KeyError:
+            pprint(data)
+            raise Exception(f"Session from url: '{url}' unknown format.")
 
     return sessions
-
-def is_session_driver(
-    debug=False,    
-    port=None, 
-    session_id=None,
-):
-    # >  curl -sSL http://127.0.0.1:46612/session/52A28BCF-FE74-4B1B-AAC7-23EBD0A82713
-    # {"sessionId":"52A28BCF-FE74-4B1B-AAC7-23EBD0A82713","status":0,"value":{"browserName":"MicrosoftEdge","browserVersion":"44.17763.1.0","platformName":"windows","platformVersion":"10","takesElementScreenshot":true,"takesScreenshot":true,"acceptSslCerts":true,"applicationCacheEnabled":true,"locationContextEnabled":true,"webStorageEnabled":true,"ms:inPrivate":false,"pageLoadStrategy":"normal","unhandledPromptBehavior":"dismiss and notify"}}
-    # >  curl -sSL http://127.0.0.1:21516/session/52A28BCF-FE74-4B1B-AAC7-23EBD0A82713
-    # {"sessionId":"52A28BCF-FE74-4B1B-AAC7-23EBD0A82713","status":6,"value":{"error":"invalid session id","message":"The specified session ID does not exist or is no longer active.","stacktrace":""}}
-
-    # port="5999"
-    cmd="curl -sSL http://127.0.0.1:{}/session/{}".format(port, session_id)
-    print(cmd)
-    if debug is True:
-        print(cmd)
-    proc=subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr=proc.communicate()
-    if stdout:
-        try:
-            data=json.loads(stdout)
-        except ValueError:
-            stdout=stdout.decode()
-            if debug is True:
-                print("stdout:", stdout)
-            if '"applicationType":"gecko"' in stdout: # firefox
-                return True
-            elif stdout == "": # chrome
-                return True
-            return False
-
-        if debug is True:
-            print("stdout data:")
-            pprint(data)
-
-        if "status" in data: # edge
-            if data["status"] == 0:
-                return True
-            else:
-                return False
-        elif "value" in data:
-            if "browserName" in data["value"]:
-                if data["value"]["browserName"] == "internet explorer":
-                    return True
-                else:
-                    return False
-            else:
-                return False
-        else:
-            return False
-    elif stderr:
-        if debug is True:
-            print("stderr: {}".format(stderr.decode()))
-
-        return False
-    else:
-        # google chrome returns nothing
-        if debug is True:
-            print("no stderr or stdout, returns empty")
-        return True

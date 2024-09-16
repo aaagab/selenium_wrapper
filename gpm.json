@@ -4,11 +4,12 @@
     ],
     "deps": [
         "fe9fbe81-806f-4e85-8042-aaa33ce02d6a|etconf|3.1.0|gpm",
-        "0948ff9f-ab89-41bc-81d7-6ef81644b902|getpath|0.2.1|gpm",
-        "f093c509-18ac-4feb-8412-f556ec2e838d|geturl|1.0.1|gpm",
-        "cf09346e-b436-4259-b6dd-e56516b508a5|message|6.2.0|gpm",
-        "89d8676a-6b02-43fa-8694-e97de5680cd0|nargs|5.0.1|gpm",
-        "df328dbe-54ab-4a6d-b7a2-932b0eaee30a|shell_helpers|5.3.1|gpm",
+        "0948ff9f-ab89-41bc-81d7-6ef81644b902|getpath|0.2.2|gpm",
+        "f093c509-18ac-4feb-8412-f556ec2e838d|geturl|1.0.2|gpm",
+        "f128844d-236e-4c1e-8537-92b2d57ffc76|guitools|6.0.4|gpm",
+        "cf09346e-b436-4259-b6dd-e56516b508a5|message|9.0.0|gpm",
+        "89d8676a-6b02-43fa-8694-e97de5680cd0|nargs|5.1.2|gpm",
+        "df328dbe-54ab-4a6d-b7a2-932b0eaee30a|shell_helpers|5.4.2|gpm",
         "01f987df-3241-4c49-9fec-049aa0a8701c|timeout|3.0.0|gpm"
     ],
     "description": "selenium python wrapper for browser automation",
@@ -19,7 +20,7 @@
         "MIT"
     ],
     "name": "selenium_wrapper",
-    "timestamp": 1708554980.3323553,
+    "timestamp": 1726524434.9256663,
     "uuid4": "8af5aa64-70d1-4992-a53c-e9dcde67fc1f",
-    "version": "13.2.3"
+    "version": "14.0.0"
 }
