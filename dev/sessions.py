@@ -46,7 +46,7 @@ def get_session(
 
     for session in sessions:
         browser_name=session.capabilities["browserName"]
-        if browser_name == browser_data.name:
+        if browser_name == browser_data.session_name:
             return session
     return None
 

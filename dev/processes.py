@@ -4,16 +4,19 @@ from enum import Enum
 from pprint import pprint, pformat
 import json
 import os
+import re
+import sys
 import psutil
 from psutil import Process
+
+from gpkgs import shell_helpers as shell
 
 class ReportOption(str, Enum):
     INDENT = 1
     PID = 2
     PPID = 3
     NAME = 4
-    PROC = 5
-    TCPCONNS = 6
+    TCPCONNS = 5
 
 class TcpConn():
     # sconn(fd=-1, family=<AddressFamily.AF_INET6: 10>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='::1', port=25), raddr=(), status='LISTEN', pid=None)
@@ -39,9 +42,8 @@ class Proc():
     def __init__(self,
         name:str,
         pid:int,
-        ppid:int,
+        ppid:int|None,
         tcp_conns:list[TcpConn],
-        psproc:Process,
     ) -> None:
         self.name=name
         self.pid=pid
@@ -50,7 +52,6 @@ class Proc():
         self._obj=deepcopy(self)
         self.parent:Proc|None=None
         self.children:list[Proc]=[]
-        self.psproc=psproc
 
     def to_json(self):
         return json.dumps(self._obj, default=lambda o: o.__dict__)
@@ -103,6 +104,45 @@ def get_tcp_connections(conn_kind:str="inet", debug:bool=False) -> list[TcpConn]
 
     return tcp_conns
 
+def set_process(
+    procs:list[Proc],
+    dy_procs:dict[int,Proc],
+    to_set:dict[int, list[Proc]],
+    proc:Proc,
+):
+    pid=proc.pid
+    ppid=proc.ppid
+    dy_procs[pid]=proc
+
+    if ppid == 0:
+        if ppid in dy_procs:
+            proc.parent=dy_procs[ppid]
+            proc.parent.children.append(proc)
+        else:
+            proc.parent=None
+    else:
+        if ppid is not None:
+            if pid == ppid:
+                pprint(proc)
+                raise NotImplementedError("PID == PPID")
+
+            if ppid in dy_procs:
+                proc.parent=dy_procs[ppid]
+                proc.parent.children.append(proc)
+            else:
+                if ppid not in to_set:
+                    to_set[ppid]=[]
+                to_set[ppid].append(proc)
+
+    if pid in to_set:
+        for p in to_set[pid]:
+            p.parent=proc
+            proc.children.append(p)
+        del to_set[pid]
+
+    procs.append(proc)
+
+
 class Processes():
     def __init__(self, debug=False):
         self.debug=debug
@@ -115,49 +155,71 @@ class Processes():
         procs:list[Proc]=[]
         dy_procs:dict[int,Proc]=dict()
         to_set:dict[int, list[Proc]]=dict()
-        for proc in psutil.process_iter():
-            tcp_conns:list[TcpConn]=[t for t in self.tcp_connections if t.pid == proc.pid]
-            pid=proc.pid
-            ppid=proc.ppid()
+
+        if sys.platform == "win32":
+            output=shell.cmd_get_value("powershell.exe wmic process get Caption,ParentProcessId,ProcessId")
+            if output is not None:
+                header=True
+                for line in output.splitlines():
+                    line=line.strip()
+                    if line:
+                        if header is True:
+                            header=False
+                            continue
+                        reg_line=re.match(r"^(.+?)\s+([0-9]+?)\s+([0-9]+?)$", line)
+                        if reg_line is not None:
+                            name=reg_line.group(1)
+                            ppid=reg_line.group(2)
+                            pid=reg_line.group(3)
+                            tcp_conns:list[TcpConn]=[t for t in self.tcp_connections if t.pid == pid]
+
+                            tmp_proc=Proc(
+                                name=name,
+                                pid=int(pid),
+                                ppid=int(ppid),
+                                tcp_conns=tcp_conns,
+                            )
+
+                            set_process(
+                                procs=procs,
+                                dy_procs=dy_procs,
+                                to_set=to_set,
+                                proc=tmp_proc,
+                            )
+
+        elif sys.platform == "linux":
+            for proc in psutil.process_iter():
+                tcp_conns:list[TcpConn]=[t for t in self.tcp_connections if t.pid == proc.pid]
+                pid=proc.pid
+                ppid=proc.ppid()
+                tmp_proc=Proc(
+                    name=proc.name(),
+                    pid=pid,
+                    ppid=ppid,
+                    tcp_conns=tcp_conns,
+                )
+
+                set_process(
+                    procs=procs,
+                    dy_procs=dy_procs,
+                    to_set=to_set,
+                    proc=tmp_proc,
+                )
+           
+
+        for pid, tmp_procs in sorted(to_set.items()):
             tmp_proc=Proc(
-                name=proc.name(),
+                name="unknown",
                 pid=pid,
-                ppid=ppid,
-                psproc=proc,
-                tcp_conns=tcp_conns,
+                ppid=None,
+                tcp_conns=[t for t in self.tcp_connections if t.pid == pid],
             )
-            dy_procs[pid]=tmp_proc
-
-            if ppid == 0:
-                if ppid in dy_procs:
-                    tmp_proc.parent=dy_procs[ppid]
-                    tmp_proc.parent.children.append(tmp_proc)
-                else:
-                    tmp_proc.parent=None
-            else:
-                if pid == ppid:
-                    print(proc)
-                    raise NotImplementedError("PID == PPID")
-                if ppid in dy_procs:
-                    tmp_proc.parent=dy_procs[ppid]
-                    tmp_proc.parent.children.append(tmp_proc)
-                else:
-                    if ppid not in to_set:
-                        to_set[ppid]=[]
-                    to_set[ppid].append(tmp_proc)
-
-            if pid in to_set:
-                for p in to_set[pid]:
-                    p.parent=tmp_proc
-                    tmp_proc.children.append(p)
-                del to_set[pid]
+            for p in tmp_procs:
+                p.parent=tmp_proc
+                p.parent.children.append(p)
 
             procs.append(tmp_proc)
-
-        if len(to_set) > 0:
-            pprint(to_set)
-            raise NotImplementedError("to_set is not empty")
-
+        
         return procs
         
     def from_pid(self, pid:int) -> Proc | None:
@@ -176,7 +238,7 @@ class Processes():
     def kill(self, pid:int):
         proc=self.from_pid(pid)
         if proc is not None:
-            proc.psproc.kill()
+            psutil.Process(proc.pid).kill()
 
     def get_proc_info(self, proc:Proc):
         level=1
@@ -199,7 +261,7 @@ class Processes():
         from_root:bool=False,               # user
         opts:list[ReportOption]|None=None,  # user if None then all options are set
         show:bool=False,                    # user
-        _infos:list[list[str|int|Process|list[TcpConn]]]|None=None,
+        _infos:list[list[str|int|Process|list[TcpConn]|None]]|None=None,
         _pproc:Proc|None=None,
         _ref:ProcInfo|None=None,
         _to_return:bool=True,
@@ -213,7 +275,6 @@ class Processes():
                 ReportOption.PID,
                 ReportOption.PPID,
                 ReportOption.NAME,
-                ReportOption.PROC,
                 ReportOption.TCPCONNS,
             ]
 
@@ -240,7 +301,7 @@ class Processes():
                     _to_return=True,
                 )
   
-        values:list[str|int|Process|list[TcpConn]]=[]
+        values:list[str|int|Process|list[TcpConn]|None]=[]
         show_fields=""
 
         prefix=(pproc_info.level-1)*"  "
@@ -255,8 +316,6 @@ class Processes():
                 value=_pproc.pid
             elif opt == ReportOption.PPID:
                 value=_pproc.ppid
-            elif opt == ReportOption.PROC:
-                value=_pproc.psproc
             elif opt == ReportOption.TCPCONNS:
                 value=_pproc.tcp_conns
             else:
@@ -271,8 +330,6 @@ class Processes():
                         space+=prefix
                 if opt == ReportOption.PID:
                     field="{:<6}".format(value)
-                elif opt == ReportOption.PROC:
-                    pass # print after
                 elif opt == ReportOption.TCPCONNS:
                     pass # print after
                 else:
@@ -284,8 +341,6 @@ class Processes():
         if show is True:
             if show_fields:
                 print(show_fields)
-                if ReportOption.PROC in opts:
-                    print(''.join([ prefix+ "  " + l for l in pformat(_pproc.psproc).splitlines(True)]))
                 if ReportOption.TCPCONNS in opts:
                     print(''.join([ prefix+ "  " + l for l in pformat(_pproc.tcp_conns).splitlines(True)]))
 
