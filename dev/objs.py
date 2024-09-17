@@ -94,6 +94,7 @@ class BrowserData():
         direpa_extensions:str,
         log_label:str,
         capability_name:str,
+        session_name:str,
 
 
         # filen_driver:str,
@@ -105,6 +106,7 @@ class BrowserData():
         self.name=name
         self.driver_data=driver_data
         # self.filen_driver=filen_driver
+        self.session_name=session_name
         self.filen_browser=filen_browser
         self.proc_name=proc_name
         # self.driver_proc_name=driver_proc_name
