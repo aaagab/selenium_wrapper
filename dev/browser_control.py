@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-
+import psutil
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import ElementNotInteractableException
 
@@ -29,7 +29,7 @@ def window_focus(processes_obj:Processes, exe_name:str, debug:bool):
     dy_procs:dict[float, list[Proc]]=dict()
 
     for p in processes_obj.from_name(name=exe_name):
-        tmptime=p.psproc.create_time()
+        tmptime=psutil.Process(pid=p.pid).create_time()
         if tmptime not in dy_procs:
             dy_procs[tmptime]=[]
         dy_procs[tmptime].append(p)
