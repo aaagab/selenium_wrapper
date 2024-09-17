@@ -52,7 +52,6 @@ def get_selenium_browsers(
             if browser_name == "edge":
                 selenium_browsers.append(browser)
             elif browser_name == "firefox":
-                input("ouais")
                 if len(browser.children) == 1:
                     child=browser.children[0]
                     if len(child.children) > 0:

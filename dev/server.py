@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import psutil
 from pprint import pprint
 from psutil import ZombieProcess
 import os
@@ -209,7 +210,7 @@ class SeleniumServer():
                         if browser == "chrome":
                             self.reset()
                             for proc in self.processes.from_name(self.browser_data.proc_name):
-                                proc.psproc.kill()
+                                psutil.Process(pid=proc.pid).kill()
                             update_chrome_driver(self.direpa_drivers)
                             msg.success("chromedriver updated. Please restart command.")
                             sys.exit(1)
@@ -319,22 +320,22 @@ class SeleniumServer():
     def reset(self, browser_names:list[str]|None=None):
         drivers:list[BrowserData]=[]
 
-        # if browser_names is None:
-        #     drivers=[d for n, d in self.browsers_data.items()]
-        # else:
-        #     for name in browser_names:
-        #         if name not in self.browsers_data:
-        #             print("In reset browser '{}' not found in {}".format(name, self.browsers_data))
-        #             sys.exit(1)
-        #         drivers.append(self.browsers_data[name])
+        if browser_names is None:
+            drivers=[d for n, d in self.browsers_data.items()]
+        else:
+            for name in browser_names:
+                if name not in self.browsers_data:
+                    print("In reset browser '{}' not found in {}".format(name, self.browsers_data))
+                    sys.exit(1)
+                drivers.append(self.browsers_data[name])
 
-        # for browser_data in drivers:
-        #     self.close_browser_processes(
-        #         browser_name=browser_data.name,
-        #         browser_proc_name=browser_data.proc_name,
-        #         driver_proc_name=browser_data.driver_data.proc_name,
-        #     )
-        #     open(browser_data.filenpa_log, "w").close()
+        for browser_data in drivers:
+            self.close_browser_processes(
+                browser_name=browser_data.name,
+                browser_proc_name=browser_data.proc_name,
+                driver_proc_name=browser_data.driver_data.proc_name,
+            )
+            open(browser_data.filenpa_log, "w").close()
 
         grid_pid=self.get_grid_url_pid()
 
@@ -344,8 +345,6 @@ class SeleniumServer():
             grid_url_pid=grid_pid,
         )
 
-        sys.exit()
-        
         open(self.filenpa_server_log, "w").close()
 
         if grid_pid is not None:
@@ -353,7 +352,8 @@ class SeleniumServer():
             self.grid_url_pid=None
         for proc in self.processes.from_name("java"):
             try:
-                if self.filenpa_selenium_server in proc.psproc.cmdline():
+
+                if self.filenpa_selenium_server in psutil.Process(proc.pid).cmdline():
                     self.processes.kill(proc.pid)
             except ZombieProcess:
                 pass
