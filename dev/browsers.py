@@ -38,8 +38,10 @@ def get_browsers_data(
         capability_name=name.upper()
         proc_name:str|None=None
         driver_name:str|None=None
+        session_name:str|None=None
         if name == "firefox":
             driver_name="gecko"
+            session_name=name
             if sys.platform == "win32":
                 filen_browser="firefox.exe"
                 proc_name=filen_browser
@@ -50,6 +52,7 @@ def get_browsers_data(
                 filen_driver="geckodriver"
         elif name == "chrome":
             driver_name=name
+            session_name=name
             if sys.platform == "win32":
                 filen_browser="chrome.exe"
                 proc_name=filen_browser
@@ -59,6 +62,7 @@ def get_browsers_data(
                 proc_name=filen_browser
                 filen_driver="chromedriver"
         elif name == "edge":
+            session_name="MicrosoftEdge"
             if sys.platform != "win32":
                 raise Exception(f"browser '{name}' is only available on Windows.")
             driver_name=name
@@ -75,6 +79,9 @@ def get_browsers_data(
 
         if proc_name is None:
             raise Exception(f"proc_name has not been set for browser '{name}'")
+    
+        if session_name is None:
+            raise Exception(f"session_name has not been set for browser '{name}'")
 
         log_label=name
         driver_proc_name=filen_driver
@@ -95,6 +102,7 @@ def get_browsers_data(
             direpa_extensions=direpa_extensions,
             log_label=log_label,
             capability_name=capability_name,
+            session_name=session_name,
         )
 
         browsers_data[name]=browser_data
@@ -121,7 +129,7 @@ def get_browsers_data(
         elif name == "edge":
             if sys.platform == "win32":
                 options = webdriver.EdgeOptions()
-                options.use_chromium = True
+                # options.use_chromium = True
                 browser_data.capabilities=options.to_capabilities()
 
                 # add that 
