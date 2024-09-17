@@ -337,16 +337,9 @@ class SeleniumServer():
             )
             open(browser_data.filenpa_log, "w").close()
 
-        grid_pid=self.get_grid_url_pid()
-
-        close_sessions(
-            debug=self.debug,
-            grid_url=self.grid_url,
-            grid_url_pid=grid_pid,
-        )
-
         open(self.filenpa_server_log, "w").close()
 
+        grid_pid=self.get_grid_url_pid()
         if grid_pid is not None:
             self.processes.kill(pid=grid_pid)
             self.grid_url_pid=None
