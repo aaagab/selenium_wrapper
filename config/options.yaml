@@ -54,10 +54,14 @@ args:
       _info: select browser from (chrome, edge, firefox)
       _label: BROWSER_NAME
       _required: true
-      reset:
+      _xor: close,info
+      close:
 
       info:
         _info: Show selected browser information
+
+      clear_cache:
+        _info: clear cache folder
 
     extensions:
       _info: when present extensions present in selenium media folder are loaded automatically
@@ -192,15 +196,8 @@ args:
   exit:
     _info: Close All Selenium processes
 
-  gui:
-    _info: Open a browser to access the grid url and _show the different sessions if any
-
-  reset:
-    _info: Reset Selenium Server
-    browsers:
-      _info: select multiple browsers from (chrome, edge, firefox)
-      _values: '*'
-      _label: BROWSER_NAME
+  show_grid:
+    _info: Open a browser to access the grid url
 
   selenium_options:
     _info: Show all command line options for Selenium Server

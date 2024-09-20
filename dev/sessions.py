@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 from requests.models import Response
 from pprint import pprint
-import json
 import os
 import requests
-import shlex
-import subprocess
 import sys
 
 from .objs import BrowserData, Session, NetstatObj
@@ -27,7 +24,7 @@ def close_sessions(
         grid_url=grid_url,
         grid_url_pid=grid_url_pid,
     ):
-        session_close(
+        close_session(
             grid_url=grid_url,
             session_id=session.id,
         )
@@ -50,11 +47,10 @@ def get_session(
             return session
     return None
 
-def session_close(
+def close_session(
     grid_url:str,
     session_id:str,
 ):
-    print("Closing the session")
     url=f"{grid_url}/session/{session_id}"
     res:Response=requests.delete(url)
     res.raise_for_status()
@@ -120,7 +116,7 @@ def get_sessions(
     grid_url:str,
     grid_url_pid:int|None,
 ) -> list[Session]:
-    url=f"{grid_url}/sessions"
+    url=f"{grid_url}/status"
     res:Response=requests.get(url)
     res.raise_for_status()
     data=res.json()
@@ -133,9 +129,10 @@ def get_sessions(
 
     if grid_url_pid is not None:
         try:
-            for session in data["value"]:
-                sessions.append(Session(capabilities=session["capabilities"], id=session["id"]))
-        except KeyError:
+            for slot in data["value"]["nodes"][0]["slots"]:
+                if slot["session"] is not None:
+                    sessions.append(Session(capabilities=slot["session"]["capabilities"], id=slot["session"]["sessionId"]))
+        except (KeyError, IndexError):
             pprint(data)
             raise Exception(f"Session from url: '{url}' unknown format.")
 

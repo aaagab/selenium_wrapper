@@ -11,16 +11,17 @@ from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException
 
 from .update_driver import update_chrome_driver
-from .browsers import get_browsers_data, get_browser_data, get_new_webdriver_session, close_browser_driver, close_selenium_browsers
+from .browsers import get_browsers_data, get_new_webdriver_session, close_browser_driver, close_selenium_browsers
 from .browser_control import window_focus
 from .browser_window import get_root_browsers, get_selenium_browsers
 from .processes import Processes, get_tcp_connections
-from .sessions import close_sessions, get_session, get_browser_pid
+from .sessions import get_session, get_browser_pid, close_session
 from .objs import BrowserData, Browser
 from .windows import Windows
 
 from ..gpkgs import message as msg
 from ..gpkgs.timeout import TimeOut
+from ..gpkgs import shell_helpers as shell
 
 class SeleniumSettings():
     def __init__(
@@ -57,7 +58,6 @@ class SeleniumSettings():
         else:
             self.filenpa_server_log=dy_settings["filenpa_server_log"]
 
-
 class SeleniumServer():
     def __init__(
         self, 
@@ -86,7 +86,7 @@ class SeleniumServer():
 
         self.host="127.0.0.1"
         self.port=4444
-        self.grid_url = "http://127.0.0.1:{}/wd/hub".format(self.port)
+        self.grid_url = f"http://127.0.0.1:{self.port}"
         self.grid_url_pid=None
 
         self.browser_names=[]
@@ -112,17 +112,19 @@ class SeleniumServer():
         self.processes.init()
         self.windows=Windows(debug=self.debug)
 
-    def connect(self, driver_name:str, reset:bool=False):
-        self.browser_data=get_browser_data(self.browser_names, self.browsers_data, driver_name)
-        if reset is True:
-            if self.debug is True:
-                print("Start or Restart '{}'".format(os.path.basename(self.filenpa_selenium_server)))
-            pid=self.get_grid_url_pid()
-            if pid is not None:
-                self.processes.kill(pid)
-                self.grid_url_pid=None
-
+    def connect(self, driver_name:str, close:bool=False, clear_cache:bool=False):
+        if driver_name not in self.browsers_data:
+            print("browser '{}' not found in {}".format(driver_name, sorted(self.browsers_data)))
+            sys.exit(1)
+        self.browser_data=self.browsers_data[driver_name]
+        if clear_cache is True:
+            if os.path.exists(self.browser_data.driver_data.direpa_data):
+                shell.rmtree(self.browser_data.driver_data.direpa_data)
+                os.makedirs(self.browser_data.driver_data.direpa_data, exist_ok=True)
+     
         status=None
+        if self.debug is True:
+            print("grid_pid:", self.get_grid_url_pid())
 
         if self.get_grid_url_pid() is None:
             driver_args:list[str]=[]
@@ -134,15 +136,14 @@ class SeleniumServer():
                 *driver_args,
                 "-jar",
                 self.filenpa_selenium_server,
-                "-log",
+                "standalone",
+                "--log",
                 self.filenpa_server_log,
-                "-timeout",
+                "--session-timeout",
                 "252000", # 70 hours before the session timeout
-                "-host",
+                "--host",
                 self.host,
             ]
-
-            # print(" ".join(cmd))
 
             DETACHED_PROCESS = 0x00000008
             cmd_str=""
@@ -164,7 +165,7 @@ class SeleniumServer():
             elif sys.platform == "linux":
                 self.grid_url_pid=subprocess.Popen(cmd).pid
 
-            timer=TimeOut(2000, unit="milliseconds").start()
+            timer=TimeOut(20000, unit="milliseconds").start()
             while self.get_grid_url_pid() is None:
                 if timer.has_ended(pause=.001):
                     raise Exception(f"Can't start '{self.filenpa_selenium_server}'")
@@ -176,12 +177,12 @@ class SeleniumServer():
                 os.path.basename(self.filenpa_selenium_server)
             ))
 
-        self.browser=self.get_browser()
+        self.browser=self.get_browser(close=close)
 
-    def get_browser(self):
+    def get_browser(self, close:bool=False):
         if self.browser is None:
             if self.browser_data is None:
-                raise Exception("browser_data must be set before calling get_browser")
+                raise Exception("browser_data must be set before calling get_browser.")
             session=get_session(
                 debug=self.debug,
                 browser_data=self.browser_data,
@@ -190,10 +191,14 @@ class SeleniumServer():
             )
 
             if session is None:
-                browser=self.browser_data.capabilities["browserName"]
+                if close is True:
+                    msg.warning(f"There is no running session to close for '{self.browser_data.name}'.")
+                    sys.exit(1)
+                
+                browser=self.browser_data.name
                 try:
                     self.browser = Browser(
-                        driver=webdriver.Remote(self.grid_url, self.browser_data.capabilities),
+                        driver=webdriver.Remote(self.grid_url, options=self.browser_data.options),
                         data=self.browser_data,
                         debug=self.debug,
                     )
@@ -206,41 +211,40 @@ class SeleniumServer():
                                     webdriver.Firefox.install_addon(self.browser.driver, path_extension, temporary=True) #type:ignore
 
                 except SessionNotCreatedException as e:
-                    if sys.platform == "win32":
-                        if browser == "chrome":
-                            self.reset()
-                            for proc in self.processes.from_name(self.browser_data.proc_name):
-                                psutil.Process(pid=proc.pid).kill()
-                            update_chrome_driver(self.direpa_drivers)
-                            msg.success("chromedriver updated. Please restart command.")
-                            sys.exit(1)
-                        else:
-                            raise
-                    elif sys.platform == "linux":
-                        raise
-                    else:
-                        raise NotImplementedError()
+                    msg.warning(f"driver needs to be updated for browser '{self.browser_data.name}'")
+                    raise
                 self.processes.init()
                 
-                self.browser_data.session=get_session(
-                    debug=self.debug,
-                    browser_data=self.browser_data,
-                    grid_url=self.grid_url,
-                    grid_url_pid=self.get_grid_url_pid(),
-                )
+                timer=TimeOut(20000, unit="milliseconds").start()
+                while True:
+                    if timer.has_ended(pause=.001):
+                        raise Exception("browser_data.session has not been set")
+                    self.browser_data.session=get_session(
+                        debug=self.debug,
+                        browser_data=self.browser_data,
+                        grid_url=self.grid_url,
+                        grid_url_pid=self.get_grid_url_pid(),
+                    )
+                    if self.browser_data.session is not None:
+                        break
 
             else:
+                if close is True:
+                    if self.debug is True:
+                        print(f"Close '{self.browser_data.name}' selenium session.")
+                    close_session(self.grid_url, session.id)
+                    sys.exit(0)
+                    
                 self.browser_data.session=session
                 self.browser=Browser(driver=get_new_webdriver_session(
                         grid_url=self.grid_url,
+                        options=self.browser_data.options,
                         session_id=session.id,
                     ),
                     data=self.browser_data,
                     debug=self.debug,
                 )
             
-            if self.browser_data.session is None:
-                raise Exception("browser_data.session has not been set")
             
             grid_pid=self.get_grid_url_pid()
             if grid_pid is None:
@@ -270,22 +274,19 @@ class SeleniumServer():
                 return tcp_conn.pid
         return None
                 
-    def show_gui(self):
+    def show_grid(self):
         exe_name:str
         if sys.platform == "win32":
             exe_name="firefox.exe"
         elif sys.platform == "linux":
             exe_name="firefox"
-        os.system(f"{exe_name} {self.grid_url}/static/resource/hub.html")
-        os.system(f"{exe_name} {self.grid_url}/sessions")
-        for name, browser_data in self.browsers_data.items():
-            if browser_data.session is not None:
-                os.system(f"{exe_name} {self.grid_url}/session/{browser_data.session.id}")
+        os.system(f"{exe_name} {self.grid_url}")
 
     def close_browser_processes(self,
         browser_name:str,
         browser_proc_name:str,
         driver_proc_name:str,
+        filenpa_log:str,
     ):
         root_browsers=get_root_browsers(debug=self.debug, browser_proc_name=browser_proc_name, processes_obj=self.processes)
 
@@ -299,7 +300,7 @@ class SeleniumServer():
             browser_name=browser_name,
             root_browsers=root_browsers,
         )
-
+        
         if self.debug is True:
             print("\nSelenium Browsers:")
             for b in selenium_browsers:
@@ -316,26 +317,18 @@ class SeleniumServer():
             driver_proc_name=driver_proc_name,
             processes_obj=self.processes,
         )
+        open(filenpa_log, "w").close()
 
-    def reset(self, browser_names:list[str]|None=None):
-        drivers:list[BrowserData]=[]
 
-        if browser_names is None:
-            drivers=[d for n, d in self.browsers_data.items()]
-        else:
-            for name in browser_names:
-                if name not in self.browsers_data:
-                    print("In reset browser '{}' not found in {}".format(name, self.browsers_data))
-                    sys.exit(1)
-                drivers.append(self.browsers_data[name])
-
+    def exit_grid(self):
+        drivers:list[BrowserData]=[d for n, d in self.browsers_data.items()]
         for browser_data in drivers:
             self.close_browser_processes(
                 browser_name=browser_data.name,
                 browser_proc_name=browser_data.proc_name,
                 driver_proc_name=browser_data.driver_data.proc_name,
+                filenpa_log=browser_data.filenpa_log,
             )
-            open(browser_data.filenpa_log, "w").close()
 
         open(self.filenpa_server_log, "w").close()
 
@@ -345,7 +338,6 @@ class SeleniumServer():
             self.grid_url_pid=None
         for proc in self.processes.from_name("java"):
             try:
-
                 if self.filenpa_selenium_server in psutil.Process(proc.pid).cmdline():
                     self.processes.kill(proc.pid)
             except ZombieProcess:
