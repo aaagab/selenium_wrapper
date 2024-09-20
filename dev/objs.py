@@ -7,7 +7,7 @@ import sys
 import time
 
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webdriver import WebDriver, BaseOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -78,11 +78,12 @@ class DriverData():
         filen:str,
         direpa_drivers:str,
         proc_name:str,
+        direpa_data:str,
     )->None:
-        # self.filenpa_exe=
         self.name=name
         self.filenpa_exe=os.path.join(direpa_drivers, filen)
         self.proc_name=proc_name
+        self.direpa_data=direpa_data
 
 class BrowserData():
     def __init__(self,
@@ -93,23 +94,15 @@ class BrowserData():
         direpa_logs:str,
         direpa_extensions:str,
         log_label:str,
-        capability_name:str,
+        options:BaseOptions,
         session_name:str,
-
-
-        # filen_driver:str,
-        # direpa_drivers:str,
-        # driver_proc_name:str,
-        # driver_label:str,
 
     )-> None:
         self.name=name
         self.driver_data=driver_data
-        # self.filen_driver=filen_driver
         self.session_name=session_name
         self.filen_browser=filen_browser
         self.proc_name=proc_name
-        # self.driver_proc_name=driver_proc_name
         self.filenpa_log=os.path.join(direpa_logs, "client_{}.txt".format(self.name))
         self.session:Session|None=None
         self.direpa_extensions=os.path.join(direpa_extensions, self.name)
@@ -118,9 +111,8 @@ class BrowserData():
             f"-Dwebdriver.{log_label}.logfile={self.filenpa_log}",
             f"-Dwebdriver.{log_label}.loglevel=DEBUG",
         ]
-        self.capabilities:dict[str, str]=getattr(DesiredCapabilities, capability_name)
+        self.options:BaseOptions=options
         self.pid:int|None=None
-
     
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
