@@ -72,17 +72,14 @@ if __name__ == "__main__":
         cmd=[ srv.filenpa_java, "-jar", srv.filenpa_selenium_server, "-role", "node", "-help" ]
         subprocess.run(cmd)
         sys.exit(0)
-    elif args.gui._here:
+    elif args.show_grid._here:
         srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, debug=debug)
-        srv.show_gui()
+        srv.show_grid()
         sys.exit(0)
     elif args.exit._here:
         srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, debug=debug)
-        srv.reset()
+        srv.exit_grid()
         sys.exit(0)
-    elif args.reset._here:
-        srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, debug=debug)
-        srv.reset(args.reset.browsers._values)
 
     if args.connect._here:
         srv=pkg.SeleniumServer(filenpa_settings=filenpa_settings, load_extensions=args.connect.extensions._here, debug=debug)
@@ -96,7 +93,7 @@ if __name__ == "__main__":
                 print("To use accessibility plugin, please use chrome browser.")
                 sys.exit(1)
 
-            srv.connect(args.connect.browser._value, reset=args.connect.browser.reset._here)
+            srv.connect(args.connect.browser._value, close=args.connect.browser.close._here, clear_cache=args.connect.browser.clear_cache._here)
 
             if args.connect.browser.info._here:
                 print(srv.get_browser().data.to_json())

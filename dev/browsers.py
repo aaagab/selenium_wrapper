@@ -6,7 +6,7 @@ import sys
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver, BaseOptions
 
 from selenium.webdriver.remote.remote_connection import LOGGER
 import logging
@@ -20,12 +20,6 @@ LOGGER.setLevel(logging.WARNING)
 from urllib3.connectionpool import log as urllibLogger
 urllibLogger.setLevel(logging.WARNING)
 
-def get_browser_data(browser_names, browsers_data, name):
-    if name not in browser_names:
-        print("browser '{}' not found in {}".format(name, browser_names))
-        sys.exit(1)
-    return browsers_data[name]
-
 def get_browsers_data(
     load_extensions:bool,
     direpa_drivers:str,
@@ -34,11 +28,15 @@ def get_browsers_data(
     browser_names:list[str], 
 ):
     browsers_data:dict[str, BrowserData]=dict()
+    options:BaseOptions|None=None
     for name in browser_names:
-        capability_name=name.upper()
         proc_name:str|None=None
         driver_name:str|None=None
         session_name:str|None=None
+
+        direpa_data=os.path.join(direpa_drivers, f"{name}_data")
+        os.makedirs(direpa_data, exist_ok=True)
+      
         if name == "firefox":
             driver_name="gecko"
             session_name=name
@@ -50,6 +48,17 @@ def get_browsers_data(
                 filen_browser="firefox"
                 proc_name="firefox-bin"
                 filen_driver="geckodriver"
+
+            options = webdriver.FirefoxOptions()
+            # fp = webdriver.FirefoxProfile()
+            # fp.set_preference("marionette.actors.enabled", True)
+            # options.profile=fp
+            options.add_argument("-profile")
+            options.add_argument(direpa_data)
+            # options.set_capability("marionette", True)
+            # https://firefox-source-docs.mozilla.org/testing/geckodriver/TraceLogs.html
+            options.log.level = "trace" #type:ignore
+            options.add_argument("-devtools")
         elif name == "chrome":
             driver_name=name
             session_name=name
@@ -61,6 +70,18 @@ def get_browsers_data(
                 filen_browser="chrome"
                 proc_name=filen_browser
                 filen_driver="chromedriver"
+
+            options=ChromeOptions()
+            if load_extensions is True:
+                for elem in sorted(os.listdir(browser_data.direpa_extensions)):
+                    path_rel, ext=os.path.splitext(elem)
+                    if ext == ".crx":
+                        path_extension=os.path.join(browser_data.direpa_extensions, elem)
+                        options.add_extension(path_extension)
+
+            options.add_experimental_option("excludeSwitches", ["enable-logging"])
+            options.add_experimental_option("excludeSwitches", ['enable-automation'])
+            options.add_argument(f"user-data-dir={direpa_data}")
         elif name == "edge":
             session_name="MicrosoftEdge"
             if sys.platform != "win32":
@@ -68,8 +89,10 @@ def get_browsers_data(
             driver_name=name
             filen_browser="msedge.exe"
             proc_name=filen_browser
-            capability_name="EDGE"
             filen_driver="msedgedriver.exe"
+
+            options = webdriver.EdgeOptions()
+            options.add_argument(f"user-data-dir={direpa_data}")
 
         if filen_driver is None:
             raise Exception(f"filen_driver has not been set for browser '{name}'")
@@ -83,14 +106,15 @@ def get_browsers_data(
         if session_name is None:
             raise Exception(f"session_name has not been set for browser '{name}'")
 
-        log_label=name
-        driver_proc_name=filen_driver
+        if options is None:
+            raise Exception(f"options has not been set for browser '{name}'")
 
         driver_data=DriverData(
             direpa_drivers=direpa_drivers,
             filen=filen_driver,
             name=driver_name,
-            proc_name=driver_proc_name,
+            proc_name=filen_driver,
+            direpa_data=direpa_data,
         )
 
         browser_data=BrowserData(
@@ -100,66 +124,33 @@ def get_browsers_data(
             proc_name=proc_name,
             direpa_logs=direpa_logs,
             direpa_extensions=direpa_extensions,
-            log_label=log_label,
-            capability_name=capability_name,
+            log_label=name,
+            options=options,
             session_name=session_name,
         )
-
         browsers_data[name]=browser_data
 
-        if name == "chrome":
-            chrome_options=ChromeOptions()
-            if load_extensions is True:
-                for elem in sorted(os.listdir(browser_data.direpa_extensions)):
-                    path_rel, ext=os.path.splitext(elem)
-                    if ext == ".crx":
-                        path_extension=os.path.join(browser_data.direpa_extensions, elem)
-                        chrome_options.add_extension(path_extension)
-            browser_data.capabilities=chrome_options.to_capabilities()
-        elif name == "firefox":
-            options = webdriver.FirefoxOptions()
-            fp = webdriver.FirefoxProfile()
-            fp.set_preference("marionette.actors.enabled", True)
-            options.profile=fp
-            options.set_capability("marionette", True)
-            # https://firefox-source-docs.mozilla.org/testing/geckodriver/TraceLogs.html
-            options.log.level = "trace" #type:ignore
-            options.add_argument("-devtools")
-            browser_data.capabilities=options.to_capabilities()
-        elif name == "edge":
-            if sys.platform == "win32":
-                options = webdriver.EdgeOptions()
-                # options.use_chromium = True
-                browser_data.capabilities=options.to_capabilities()
-
-                # add that 
-                # https://stackoverflow.com/questions/70794746/ms-way-to-python-code-edge-session-using-selenium-4
-                # options = webdriver.
-                # options.ignore_protected_mode_settings = True
-                # browser_data.capabilities=options.to_capabilities()
-                    
-                # with profile fp.set_preference("marionette.actors.enabled", False) not crashing working
     return browsers_data
 
 def get_new_webdriver_session(
     grid_url:str,
+    options:BaseOptions,
     session_id:str,
 ):
     # Save the original function, so we can revert our patch
     org_command_execute = RemoteWebDriver.execute
 
-    def new_command_execute(self, command, params=None):
+    def new_command_execute(self, command:str, params:dict|None=None):
         if command == "newSession":
             # Mock the response
-            return {'success': 0, 'value': None, 'sessionId': session_id}
+            return {'success': 0, 'value': {'sessionId': session_id}}
         else:
             return org_command_execute(self, command, params) #type:ignore
 
     # Patch the function before creating the driver object
     RemoteWebDriver.execute = new_command_execute #type:ignore
 
-    new_driver = webdriver.Remote(command_executor=grid_url, desired_capabilities={})
-    
+    new_driver = webdriver.Remote(command_executor=grid_url, options=options)
     new_driver.session_id =session_id #type:ignore
 
     # Replace the patched function with original function
