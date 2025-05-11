@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # author: Gabriel Auger
-# version: 15.0.0
+# version: 15.0.1
 # name: Selenium Wrapper
 # license: MIT
 import sys
 
-__version__= "15.0.0"
+__version__= "15.0.1"
 
 from .dev.obj_info import get_obj_info
 from .dev.server import SeleniumServer, SeleniumSettings
