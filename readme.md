@@ -27,6 +27,3 @@ take a screenshot of the button and add it in the folder
 
 then when launching selenium you have to pin the extension to make the button visible by clicking on the extensions icon on the navbar and pin the icon.
 `main.py --connect --driver chrome --accessibility --refresh --focus --url /`
-
-Software center deleted my java install with script "Java Removal Script - Silent User Interface"
-So Reinstall java in a home folder, renamed that folder after install, launched the uninstall from programs, rever the folder name back, add the path to filenpa_java, seems to work allright.
